@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>GSM.Gate Portal</title>
+<title>Система управления GSM.Relay</title>
 <style>
 :root{
   --bg:#0A0A0A;--sidebar:#0D0D0D;--card:#141414;--border:#242424;
@@ -50,8 +50,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter',Arial,sans-serif;
 
 /* ── Main area ── */
 .main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
-.page{display:none;flex:1;padding:20px}
-.page.active{display:flex;flex-direction:column}
+.page{display:none;flex:1;padding:20px;flex-direction:column}
+.page.active{display:flex}
 .page-title{font-size:18px;font-weight:700;color:var(--text);margin-bottom:16px}
 
 /* ── Dashboard tiles ── */
@@ -81,16 +81,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter',Arial,sans-serif;
 .ctx-item.danger{color:var(--err)}
 .ctx-sep{height:1px;background:#333;margin:3px 0}
 
-/* ── Detail modal ── */
+/* ── Modals (shared) ── */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;
                display:flex;align-items:center;justify-content:center}
 .modal-overlay.hidden{display:none}
 .modal{background:#141414;border-radius:18px;padding:22px;width:100%;max-width:480px;
-       max-height:90vh;overflow-y:auto;border:1px solid var(--border);
-       position:relative}
+       max-height:90vh;overflow-y:auto;border:1px solid var(--border);position:relative}
 .modal-close{position:absolute;top:14px;right:16px;background:none;border:none;
              color:var(--muted);font-size:22px;cursor:pointer;line-height:1;padding:2px}
 .modal-title{font-size:16px;font-weight:700;color:var(--primary);margin-bottom:14px}
+
+/* ── Detail modal ── */
 .autoclose-bar{height:3px;background:#222;border-radius:2px;margin-bottom:14px;overflow:hidden}
 .autoclose-fill{height:100%;background:var(--primary);border-radius:2px;transition:width 1s linear}
 .detail-minimap{width:100%;height:140px;border-radius:10px;overflow:hidden;margin-bottom:14px;
@@ -118,15 +119,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter',Arial,sans-serif;
 .map-placeholder{position:absolute;inset:0;display:flex;flex-direction:column;
                  align-items:center;justify-content:center;gap:10px;color:var(--muted)}
 
-/* ── Log page ── */
-.log-toolbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
-.log-filter{padding:6px 12px;background:#1A1A1A;border:1px solid var(--border);
-            border-radius:8px;font-size:12px;color:var(--text);font-family:inherit;cursor:pointer}
-.log-filter.active{border-color:var(--primary);color:var(--primary)}
-.log-clear{margin-left:auto;padding:6px 12px;background:transparent;color:var(--err);
+/* ── Log page / shared toolbar ── */
+.toolbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
+.tb-filter{padding:6px 12px;background:#1A1A1A;border:1px solid var(--border);
+           border-radius:8px;font-size:12px;color:var(--text);font-family:inherit;cursor:pointer}
+.tb-filter.active{border-color:var(--primary);color:var(--primary)}
+.tb-danger{padding:6px 12px;background:transparent;color:var(--err);
            border:1px solid rgba(255,68,68,.3);border-radius:8px;font-size:12px;
            font-family:inherit;cursor:pointer}
-.log-clear:hover{background:rgba(255,68,68,.07)}
+.tb-danger:hover{background:rgba(255,68,68,.07)}
 .log-table{width:100%;border-collapse:collapse}
 .log-table th{font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;
               color:var(--muted);padding:7px 10px;border-bottom:2px solid var(--border);
@@ -157,7 +158,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter',Arial,sans-serif;
 .mappicker-btn.ok{background:var(--primary);color:#0A0A0A}
 .mappicker-btn.cancel{background:#1A1A1A;color:var(--text);border:1px solid var(--border)}
 
-/* ── Edit modal / Settings modal (shared form styles) ── */
+/* ── Form styles (shared by edit/settings/addphone modals) ── */
 .form-label{display:block;font-size:10px;font-weight:700;letter-spacing:.7px;
             text-transform:uppercase;color:var(--muted);margin:12px 0 4px}
 .form-input{width:100%;padding:10px 12px;border:1.5px solid var(--border);
@@ -178,6 +179,27 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter',Arial,sans-serif;
              cursor:pointer;white-space:nowrap;transition:all .15s;margin-top:4px}
 .geocode-btn:hover{border-color:var(--primary);color:var(--primary)}
 .coord-display{font-size:11px;color:var(--muted2);margin-top:4px}
+
+/* ── Phone page ── */
+.phone-card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.phone-card .log-table td{vertical-align:middle}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700}
+.badge.perm{background:rgba(0,204,102,.15);color:var(--ok)}
+.badge.guest{background:rgba(255,170,0,.15);color:var(--warn)}
+.badge.once{background:rgba(255,68,68,.15);color:var(--err)}
+.ph-action-btn{padding:4px 10px;background:#1E1E1E;border:1px solid var(--border);
+               border-radius:6px;font-size:11px;color:var(--muted2);font-family:inherit;
+               cursor:pointer;transition:all .12s}
+.ph-action-btn:hover{border-color:var(--primary);color:var(--primary)}
+.ph-action-btn.del:hover{border-color:var(--err);color:var(--err)}
+.radio-row{display:flex;gap:8px;margin-top:4px}
+.radio-label{flex:1;display:flex;align-items:center;gap:8px;padding:10px 12px;
+             background:#1E1E1E;border:1.5px solid var(--border);border-radius:8px;
+             cursor:pointer;font-size:13px;transition:border-color .12s}
+.radio-label:has(input:checked){border-color:var(--primary)}
+.device-check-item{display:flex;align-items:center;gap:8px;padding:7px 10px;
+                   background:#1A1A1A;border-radius:7px;cursor:pointer;font-size:13px}
+.device-check-item input{accent-color:var(--primary);width:14px;height:14px}
 
 /* ── Toast ── */
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
@@ -200,7 +222,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter',Arial,sans-serif;
   .sidebar-section{display:none}
   .sidebar-footer .add-device-btn span{display:none}
   .add-device-btn{padding:9px}
-  .topbar-name{display:none}
 }
 </style>
 </head>
@@ -221,15 +242,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter',Arial,sans-serif;
 
   <!-- Sidebar -->
   <div class="sidebar">
-    <div class="sidebar-section">Навигация</div>
+    <div class="sidebar-section">Мониторинг</div>
     <div class="nav-item active" onclick="showPage('dashboard')" id="nav-dashboard">
       <span class="nav-icon">◼</span><span class="nav-label">Дашборд</span>
     </div>
     <div class="nav-item" onclick="showPage('map')" id="nav-map">
       <span class="nav-icon">◎</span><span class="nav-label">Карта</span>
     </div>
+    <div class="sidebar-section">Доступы</div>
+    <div class="nav-item" onclick="showPage('phones')" id="nav-phones">
+      <span class="nav-icon">☎</span><span class="nav-label">Телефоны</span>
+    </div>
+    <div class="nav-item" onclick="showPage('calllog')" id="nav-calllog">
+      <span class="nav-icon">👥</span><span class="nav-label">Журнал доступа</span>
+    </div>
+    <div class="sidebar-section">Система</div>
     <div class="nav-item" onclick="showPage('log')" id="nav-log">
-      <span class="nav-icon">≡</span><span class="nav-label">Журнал</span>
+      <span class="nav-icon">≡</span><span class="nav-label">Журнал команд</span>
     </div>
     <div class="sidebar-sep"></div>
     <div class="sidebar-footer">
@@ -249,7 +278,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter',Arial,sans-serif;
     </div>
 
     <!-- Map -->
-    <div class="page" id="page-map" style="display:none">
+    <div class="page" id="page-map">
       <div class="page-title">Карта устройств</div>
       <div id="map-container">
         <div id="ymap"></div>
@@ -260,14 +289,43 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter',Arial,sans-serif;
       </div>
     </div>
 
-    <!-- Log -->
-    <div class="page" id="page-log" style="display:none">
-      <div class="page-title">Журнал событий</div>
-      <div class="log-toolbar">
-        <button class="log-filter active" onclick="setLogFilter('all',this)">Все</button>
-        <button class="log-filter" onclick="setLogFilter('ok',this)">Успешные</button>
-        <button class="log-filter" onclick="setLogFilter('err',this)">Ошибки</button>
-        <button class="log-clear" onclick="clearLog()">Очистить</button>
+    <!-- Phones -->
+    <div class="page" id="page-phones">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+        <div class="page-title" style="margin-bottom:0">Телефоны</div>
+        <select id="phones-device-sel" class="form-input" style="max-width:240px;padding:7px 10px;font-size:13px" onchange="loadPhones()">
+          <option value="">— Выберите устройство —</option>
+        </select>
+        <button class="form-btn primary" style="flex:0;padding:8px 16px;font-size:13px;min-width:0" onclick="showAddPhoneModal(null)">+ Добавить</button>
+      </div>
+      <div class="toolbar">
+        <button class="tb-filter active" id="phones-tab-perm"  onclick="setPhoneTab('perm',this)">Постоянные</button>
+        <button class="tb-filter"        id="phones-tab-guest" onclick="setPhoneTab('guest',this)">Гостевые</button>
+      </div>
+      <div id="phone-list-wrap">
+        <div class="empty-state"><b>☎</b>Выберите устройство</div>
+      </div>
+    </div>
+
+    <!-- Call log -->
+    <div class="page" id="page-calllog">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <div class="page-title" style="margin-bottom:0">Журнал доступа</div>
+        <button class="geocode-btn" onclick="loadCallLog()">↻ Обновить</button>
+      </div>
+      <div id="calllog-content">
+        <div class="empty-state"><b>👥</b>Нет данных</div>
+      </div>
+    </div>
+
+    <!-- Commands log -->
+    <div class="page" id="page-log">
+      <div class="page-title">Журнал команд</div>
+      <div class="toolbar">
+        <button class="tb-filter active" onclick="setLogFilter('all',this)">Все</button>
+        <button class="tb-filter" onclick="setLogFilter('ok',this)">Успешные</button>
+        <button class="tb-filter" onclick="setLogFilter('err',this)">Ошибки</button>
+        <button class="tb-danger" style="margin-left:auto" onclick="clearLog()">Очистить</button>
       </div>
       <div style="overflow-x:auto">
         <table class="log-table">
@@ -301,7 +359,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter',Arial,sans-serif;
 
 <!-- Detail modal -->
 <div class="modal-overlay hidden" id="detail-overlay" onclick="closeDetailModal()">
-  <div class="modal" onclick="event.stopPropagation()" onmousemove="resetAutoClose()" onclick="resetAutoClose()">
+  <div class="modal" onclick="event.stopPropagation()" onmousemove="resetAutoClose()">
     <button class="modal-close" onclick="closeDetailModal()">×</button>
     <div class="modal-title" id="detail-title">Устройство</div>
     <div class="autoclose-bar"><div class="autoclose-fill" id="autoclose-fill"></div></div>
@@ -311,6 +369,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter',Arial,sans-serif;
       <button class="detail-btn open"  onclick="detailCmd('open')">⚡ Открыть</button>
       <button class="detail-btn hold"  onclick="detailCmd('hold')">⏸ Держать</button>
       <button class="detail-btn close" onclick="detailCmd('close')">■ Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<!-- Map picker modal -->
+<div class="mappicker-overlay hidden" id="mappicker-overlay">
+  <div class="mappicker-modal" onclick="event.stopPropagation()">
+    <div class="mappicker-header">
+      <div class="mappicker-title">📍 Укажите точку на карте</div>
+      <button class="modal-close" style="position:static" onclick="closeMapPicker()">×</button>
+    </div>
+    <div id="mappicker-map"></div>
+    <div class="mappicker-footer">
+      <div class="mappicker-hint" id="mappicker-hint">Нажмите на карту для выбора точки</div>
+      <button class="mappicker-btn ok" onclick="confirmMapPicker()">Подтвердить</button>
+      <button class="mappicker-btn cancel" onclick="closeMapPicker()">Отмена</button>
     </div>
   </div>
 </div>
@@ -343,12 +417,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter',Arial,sans-serif;
       </div>
     </div>
 
-    <div class="form-row2" style="margin-top:4px">
-      <div>
-        <label class="form-label">URL функции</label>
-        <input class="form-input" id="e-url" type="url" placeholder="https://functions.yandexcloud.net/...">
-      </div>
-    </div>
+    <label class="form-label">URL функции</label>
+    <input class="form-input" id="e-url" type="url" placeholder="https://functions.yandexcloud.net/...">
 
     <div class="form-row2">
       <div>
@@ -379,24 +449,51 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter',Arial,sans-serif;
     <div class="form-btn-row" id="delete-btn-row" style="display:none">
       <button class="form-btn danger" onclick="deleteDevice()">🗑 Удалить устройство</button>
     </div>
-
     <input type="hidden" id="e-id">
   </div>
 </div>
 
-<!-- Map picker modal -->
-<div class="mappicker-overlay hidden" id="mappicker-overlay">
-  <div class="mappicker-modal" onclick="event.stopPropagation()">
-    <div class="mappicker-header">
-      <div class="mappicker-title">📍 Укажите точку на карте</div>
-      <button class="modal-close" style="position:static" onclick="closeMapPicker()">×</button>
+<!-- Add / Edit phone modal -->
+<div class="modal-overlay hidden" id="addphone-overlay" onclick="closeAddPhoneModal()">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:480px">
+    <button class="modal-close" onclick="closeAddPhoneModal()">×</button>
+    <div class="modal-title" id="addphone-title">Добавить телефон</div>
+
+    <label class="form-label">Номер телефона</label>
+    <input class="form-input" id="ph-number" type="tel" placeholder="+79001234567">
+
+    <label class="form-label">Имя / метка</label>
+    <input class="form-input" id="ph-name" type="text" placeholder="Иван Иванов">
+
+    <label class="form-label">Тип доступа</label>
+    <div class="radio-row">
+      <label class="radio-label">
+        <input type="radio" name="ph-type" value="perm" id="ph-perm" checked onchange="updatePhoneTypeUI()">
+        Постоянный
+      </label>
+      <label class="radio-label">
+        <input type="radio" name="ph-type" value="guest" id="ph-guest" onchange="updatePhoneTypeUI()">
+        Гостевой
+      </label>
     </div>
-    <div id="mappicker-map"></div>
-    <div class="mappicker-footer">
-      <div class="mappicker-hint" id="mappicker-hint">Нажмите на карту для выбора точки</div>
-      <button class="mappicker-btn ok" onclick="confirmMapPicker()">Подтвердить</button>
-      <button class="mappicker-btn cancel" onclick="closeMapPicker()">Отмена</button>
+
+    <div id="ph-trips-wrap" style="display:none">
+      <label class="form-label">Количество проходов</label>
+      <input class="form-input" id="ph-trips" type="number" min="1" value="1" placeholder="1">
+      <div style="font-size:11px;color:var(--muted2);margin-top:4px">1 = одноразовый пропуск · N = N проходов</div>
     </div>
+
+    <label class="form-label">Добавить на устройства</label>
+    <div id="ph-devices-list" style="display:flex;flex-direction:column;gap:4px;margin-top:4px;max-height:160px;overflow-y:auto"></div>
+
+    <div class="form-btn-row">
+      <button class="form-btn primary" onclick="savePhone()">💾 Сохранить</button>
+      <button class="form-btn secondary" onclick="closeAddPhoneModal()">Отмена</button>
+    </div>
+    <div class="form-btn-row" id="ph-delete-row" style="display:none">
+      <button class="form-btn danger" onclick="deletePhoneFromAll()">🗑 Удалить со всех устройств</button>
+    </div>
+    <input type="hidden" id="ph-editing-number">
   </div>
 </div>
 
@@ -407,13 +504,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter',Arial,sans-serif;
     <div class="modal-title">⚙ Настройки портала</div>
 
     <label class="form-label">Название портала</label>
-    <input class="form-input" id="cfg-portalname" type="text" placeholder="Мои объекты">
+    <input class="form-input" id="cfg-portalname" type="text" placeholder="Система управления GSM.Relay">
 
     <label class="form-label">Ключ Яндекс Карт JS API</label>
-    <input class="form-input" id="cfg-ymapskey" type="text" placeholder="оставьте пустым для статических карт">
-    <div style="font-size:11px;color:var(--muted2);margin-top:4px">
-      Без ключа на странице Карта будут использоваться статические изображения.
-    </div>
+    <input class="form-input" id="cfg-ymapskey" type="text" placeholder="оставьте пустым — используется встроенный ключ">
 
     <div class="form-btn-row">
       <button class="form-btn primary" onclick="saveSettingsModal()">Сохранить</button>
@@ -428,29 +522,33 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter',Arial,sans-serif;
 /* ═══════════════════════════════════════════════════════════════
    STATE
 ═══════════════════════════════════════════════════════════════ */
-const K_DEVICES  = 'gsm_devices_v2';
-const K_EVENTS   = 'gsm_events_v2';
-const K_SETTINGS = 'gsm_settings_v2';
-const MAX_EVENTS = 500;
-
+const K_DEVICES     = 'gsm_devices_v2';
+const K_EVENTS      = 'gsm_events_v2';
+const K_SETTINGS    = 'gsm_settings_v2';
+const K_PHONE_NAMES = 'gsm_phone_names_v1';
+const MAX_EVENTS    = 500;
 const DEFAULT_YMAPS_KEY = '689cf60d-9f2c-41a7-8ca3-6ff5c51ac0f8';
 
-let devices  = [];  // [{id,name,address,lat,lon,functionUrl,bucket,storageFile,charPos,confirmChar}]
-let events   = [];  // [{id,time,deviceId,deviceName,event,ok}]
-let settings = { portalName:'Система управления GSM.Relay', ymapsKey:'' };
-
-let deviceStatus = {}; // {deviceId: {online,stale,offline,age,relayVal}}
+let devices      = [];
+let events       = [];
+let settings     = { portalName:'Система управления GSM.Relay', ymapsKey:'' };
+let phoneNames   = {};   // { number: name }
+let phonesCache  = {};   // { deviceId: [{number,date,trips}] }
+let phonesTab    = 'perm';
+let phonesDevId  = null;
+let deviceStatus = {};
 
 function loadState() {
-  try { devices  = JSON.parse(localStorage.getItem(K_DEVICES))  || []; } catch(e){ devices = []; }
-  try { events   = JSON.parse(localStorage.getItem(K_EVENTS))   || []; } catch(e){ events = []; }
-  try { const s  = JSON.parse(localStorage.getItem(K_SETTINGS));
+  try { devices    = JSON.parse(localStorage.getItem(K_DEVICES))     || []; } catch(e){ devices = []; }
+  try { events     = JSON.parse(localStorage.getItem(K_EVENTS))      || []; } catch(e){ events = []; }
+  try { const s    = JSON.parse(localStorage.getItem(K_SETTINGS));
         if (s) settings = Object.assign(settings, s); } catch(e){}
+  try { phoneNames = JSON.parse(localStorage.getItem(K_PHONE_NAMES)) || {}; } catch(e){ phoneNames = {}; }
 }
-function persistDevices()  { localStorage.setItem(K_DEVICES,  JSON.stringify(devices));  }
-function persistEvents()   { localStorage.setItem(K_EVENTS,   JSON.stringify(events));   }
-function _persistSettings(){ localStorage.setItem(K_SETTINGS, JSON.stringify(settings)); }
-
+function persistDevices()   { localStorage.setItem(K_DEVICES,     JSON.stringify(devices));    }
+function persistEvents()    { localStorage.setItem(K_EVENTS,      JSON.stringify(events));     }
+function _persistSettings() { localStorage.setItem(K_SETTINGS,    JSON.stringify(settings));   }
+function persistPhoneNames(){ localStorage.setItem(K_PHONE_NAMES, JSON.stringify(phoneNames)); }
 function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -458,30 +556,27 @@ function genId() { return Date.now().toString(36) + Math.random().toString(36).s
 ═══════════════════════════════════════════════════════════════ */
 function buildApiUrl(dev, action, extra) {
   const base = (dev.functionUrl || '').replace(/\/$/, '');
-  let u = base + '?action=' + action
-        + '&bucket=' + encodeURIComponent(dev.bucket || '');
+  let u = base + '?action=' + action + '&bucket=' + encodeURIComponent(dev.bucket || '');
   if (extra) u += extra;
   return u;
 }
 
 async function apiHeartbeat(dev) {
-  const url = buildApiUrl(dev, 'read_file',
-    '&file=heartbeat.txt');
-  const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
+  const url = buildApiUrl(dev, 'read_file', '&file=heartbeat.txt');
+  const r   = await fetch(url, { signal: AbortSignal.timeout(8000) });
   if (!r.ok) throw new Error('HTTP ' + r.status);
   const txt = (await r.text()).trim();
   const ts  = new Date(txt.endsWith('Z') ? txt : txt + 'Z');
   const age = (Date.now() - ts.getTime()) / 1000;
-  if (isNaN(age) || txt.length < 10) return { status:'stale', age: null };
-  if (age < 180)  return { status:'online', age };
-  if (age < 600)  return { status:'stale',  age };
+  if (isNaN(age) || txt.length < 10) return { status:'stale', age:null };
+  if (age < 180)  return { status:'online',  age };
+  if (age < 600)  return { status:'stale',   age };
   return { status:'offline', age };
 }
 
 async function apiRelayRead(dev) {
   const url = buildApiUrl(dev, 'read',
-    '&file=' + encodeURIComponent(dev.storageFile || 'relay.txt')
-    + '&pos=' + (dev.charPos || 0));
+    '&file=' + encodeURIComponent(dev.storageFile || 'relay.txt') + '&pos=' + (dev.charPos || 0));
   const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
   if (!r.ok) throw new Error('HTTP ' + r.status);
   return (await r.text()).trim();
@@ -492,12 +587,52 @@ async function apiCommand(dev, action) {
   const val  = vals[action];
   const url  = buildApiUrl(dev, 'write',
     '&file=' + encodeURIComponent(dev.storageFile || 'relay.txt')
-    + '&pos=' + (dev.charPos || 0)
-    + '&value=' + encodeURIComponent(val));
+    + '&pos=' + (dev.charPos || 0) + '&value=' + encodeURIComponent(val));
   const r   = await fetch(url, { signal: AbortSignal.timeout(10000) });
   const txt = (await r.text()).trim();
   if (!r.ok || txt !== val) throw new Error(txt || 'Ошибка');
   return txt;
+}
+
+/* ── Phones CSV API ── */
+function parsePhonesCsv(text) {
+  const result = [];
+  for (const raw of (text || '').split('\n')) {
+    const line = raw.trim();
+    if (!line) continue;
+    const parts = line.split(',');
+    const number = (parts[0] || '').trim();
+    if (!number || number === 'number' || number.toUpperCase() === 'CLEAR') continue;
+    const date  = (parts[1] || '').trim();
+    const trips = parseInt(parts[2] || '0') || 0;
+    result.push({ number, date, trips });
+  }
+  return result;
+}
+
+function buildPhonesCsv(phones) {
+  return phones.map(p => `${p.number},${p.date || ''},${p.trips}`).join('\n');
+}
+
+async function fetchPhones(dev) {
+  try {
+    const url = buildApiUrl(dev, 'read_file', '&file=phones.csv');
+    const r   = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (!r.ok) return [];
+    return parsePhonesCsv(await r.text());
+  } catch(e) { return []; }
+}
+
+async function writePhones(dev, phones) {
+  const url = buildApiUrl(dev, 'write_file', '&file=phones.csv');
+  const r   = await fetch(url, {
+    method: 'POST',
+    body:   buildPhonesCsv(phones),
+    signal: AbortSignal.timeout(10000)
+  });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const txt = (await r.text()).trim();
+  if (txt !== 'ok') throw new Error(txt);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -510,34 +645,32 @@ async function pollDevice(dev) {
       apiHeartbeat(dev).catch(() => ({ status:'offline', age:null })),
       apiRelayRead(dev).catch(() => null)
     ]);
-    deviceStatus[dev.id] = {
-      status: hb.status,
-      age:    hb.age,
-      relay:  rv
-    };
+    deviceStatus[dev.id] = { status:hb.status, age:hb.age, relay:rv };
   } catch(e) {
     deviceStatus[dev.id] = { status:'offline', age:null, relay:null };
   }
   renderDashboard();
 }
 
-function pollAll() {
-  devices.forEach(dev => pollDevice(dev));
-}
+function pollAll() { devices.forEach(pollDevice); }
 
 /* ═══════════════════════════════════════════════════════════════
    NAVIGATION
 ═══════════════════════════════════════════════════════════════ */
 let currentPage = 'dashboard';
+const ALL_PAGES = ['dashboard','map','phones','calllog','log'];
 
 function showPage(name) {
-  ['dashboard','map','log'].forEach(p => {
+  ALL_PAGES.forEach(p => {
     document.getElementById('page-' + p).style.display = (p === name) ? 'flex' : 'none';
-    document.getElementById('nav-' + p).classList.toggle('active', p === name);
+    const nav = document.getElementById('nav-' + p);
+    if (nav) nav.classList.toggle('active', p === name);
   });
   currentPage = name;
-  if (name === 'map')  renderMapPage();
-  if (name === 'log')  renderLogRows();
+  if (name === 'map')     renderMapPage();
+  if (name === 'log')     renderLogRows();
+  if (name === 'phones')  initPhonesPage();
+  if (name === 'calllog') loadCallLog();
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -549,31 +682,22 @@ function renderDashboard() {
     g.innerHTML = '<div class="empty-state"><b>◼</b>Нет устройств<br><small>Нажмите «+ Добавить устройство» в меню слева</small></div>';
     return;
   }
-  g.innerHTML = devices.map(renderTile).join('');
-}
-
-function renderTile(dev) {
-  const st = deviceStatus[dev.id] || {};
-  const dotCls = st.status || '';
-  let statusText = 'Не настроено';
-  if (dev.functionUrl && dev.bucket) {
-    if (st.status === 'online')  statusText = 'Онлайн';
-    else if (st.status === 'stale')  statusText = 'Нет данных';
-    else if (st.status === 'offline') statusText = 'Офлайн';
-    else statusText = 'Опрашивается…';
-  }
-  const ageText = st.age != null ? fmtAge(st.age) + ' назад' : '';
-  const addr = esc(dev.address || '');
-  return `<div class="tile" id="tile-${dev.id}" data-id="${dev.id}"
-               onclick="onTileClick(event,'${dev.id}')">
-    <div class="tile-head">
-      <div class="tile-dot ${dotCls}"></div>
-      <div class="tile-name">${esc(dev.name || 'Без имени')}</div>
-    </div>
-    ${addr ? `<div class="tile-addr">📍 ${addr}</div>` : ''}
-    <div class="tile-status">${statusText}</div>
-    ${ageText ? `<div class="tile-age">${ageText}</div>` : ''}
-  </div>`;
+  g.innerHTML = devices.map(dev => {
+    const st  = deviceStatus[dev.id] || {};
+    const dotCls = st.status || '';
+    let statusText = (!dev.functionUrl || !dev.bucket) ? 'Не настроено' :
+      ({ online:'Онлайн', stale:'Нет данных', offline:'Офлайн' }[st.status] || 'Опрашивается…');
+    const ageText = st.age != null ? fmtAge(st.age) + ' назад' : '';
+    return `<div class="tile" data-id="${dev.id}" onclick="onTileClick(event,'${dev.id}')">
+      <div class="tile-head">
+        <div class="tile-dot ${dotCls}"></div>
+        <div class="tile-name">${esc(dev.name || 'Без имени')}</div>
+      </div>
+      ${dev.address ? `<div class="tile-addr">📍 ${esc(dev.address)}</div>` : ''}
+      <div class="tile-status">${statusText}</div>
+      ${ageText ? `<div class="tile-age">${ageText}</div>` : ''}
+    </div>`;
+  }).join('');
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -588,8 +712,7 @@ function onTileClick(e, id) {
   m.style.display = 'block';
   const mx = Math.min(e.clientX, window.innerWidth  - m.offsetWidth  - 10);
   const my = Math.min(e.clientY, window.innerHeight - m.offsetHeight - 10);
-  m.style.left = mx + 'px';
-  m.style.top  = my + 'px';
+  m.style.left = mx + 'px'; m.style.top = my + 'px';
 }
 
 function hideCtxMenu() {
@@ -601,11 +724,9 @@ async function ctxAction(action) {
   hideCtxMenu();
   const dev = devices.find(d => d.id === ctxDeviceId);
   if (!dev) return;
-
   if (action === 'detail') { showDetailModal(dev.id); return; }
   if (action === 'edit')   { showEditModal(dev.id);   return; }
   if (action === 'restart' && !confirm('Перезагрузить устройство «' + dev.name + '»?')) return;
-
   const LABELS = { open:'Открыть', hold:'Держать', close:'Закрыть', restart:'Рестарт' };
   try {
     await apiCommand(dev, action);
@@ -620,61 +741,42 @@ async function ctxAction(action) {
 /* ═══════════════════════════════════════════════════════════════
    DETAIL MODAL
 ═══════════════════════════════════════════════════════════════ */
-let detailDevId = null;
-let autoCloseTid = null;
-let autoCloseLeft = 60;
-let autoCloseInterval = null;
+let detailDevId = null, autoCloseLeft = 60, autoCloseInterval = null;
 
 function showDetailModal(id) {
   const dev = devices.find(d => d.id === id);
   if (!dev) return;
   detailDevId = id;
-
   document.getElementById('detail-title').textContent = dev.name || 'Устройство';
-
-  // Mini-map
   const mm = document.getElementById('detail-minimap');
-  if (dev.lat && dev.lon) {
-    mm.innerHTML = `<img src="https://static-maps.yandex.ru/1.x/?lang=ru_RU&ll=${dev.lon},${dev.lat}&z=15&size=480,140&l=map&pt=${dev.lon},${dev.lat},pm2rdm" alt="Карта">`;
-  } else {
-    mm.innerHTML = '<div class="no-map">Координаты не указаны</div>';
-  }
-
-  // Info rows
+  mm.innerHTML = (dev.lat && dev.lon)
+    ? `<img src="https://static-maps.yandex.ru/1.x/?lang=ru_RU&ll=${dev.lon},${dev.lat}&z=15&size=480,140&l=map&pt=${dev.lon},${dev.lat},pm2rdm" alt="Карта">`
+    : '<div class="no-map">Координаты не указаны</div>';
   const st = deviceStatus[id] || {};
-  const statusText = { online:'Онлайн', stale:'Нет данных', offline:'Офлайн' }[st.status] || '—';
-  const ageText    = st.age != null ? fmtAge(st.age) + ' назад' : '—';
-  const relayText  = st.relay != null ? 'Символ: ' + st.relay : '—';
   document.getElementById('detail-info').innerHTML = `
-    <div class="detail-row"><span class="detail-label">Статус</span><span class="detail-value">${statusText}</span></div>
-    <div class="detail-row"><span class="detail-label">Последние данные</span><span class="detail-value">${ageText}</span></div>
-    ${dev.address ? `<div class="detail-row"><span class="detail-label">Адрес</span><span class="detail-value" style="max-width:250px">${esc(dev.address)}</span></div>` : ''}
-    <div class="detail-row"><span class="detail-label">Реле</span><span class="detail-value">${relayText}</span></div>
-  `;
-
+    <div class="detail-row"><span class="detail-label">Статус</span><span class="detail-value">${{online:'Онлайн',stale:'Нет данных',offline:'Офлайн'}[st.status]||'—'}</span></div>
+    <div class="detail-row"><span class="detail-label">Последние данные</span><span class="detail-value">${st.age!=null?fmtAge(st.age)+' назад':'—'}</span></div>
+    ${dev.address?`<div class="detail-row"><span class="detail-label">Адрес</span><span class="detail-value" style="max-width:250px">${esc(dev.address)}</span></div>`:''}
+    <div class="detail-row"><span class="detail-label">Реле</span><span class="detail-value">${st.relay!=null?'Символ: '+st.relay:'—'}</span></div>`;
   document.getElementById('detail-overlay').classList.remove('hidden');
   resetAutoClose();
 }
 
 function closeDetailModal() {
   document.getElementById('detail-overlay').classList.add('hidden');
-  clearTimeout(autoCloseTid);
   clearInterval(autoCloseInterval);
   detailDevId = null;
 }
 
 function resetAutoClose() {
-  clearTimeout(autoCloseTid);
   clearInterval(autoCloseInterval);
   autoCloseLeft = 60;
   const fill = document.getElementById('autoclose-fill');
-  fill.style.transition = 'none';
-  fill.style.width = '100%';
+  fill.style.transition = 'none'; fill.style.width = '100%';
   autoCloseInterval = setInterval(() => {
     autoCloseLeft--;
-    const pct = (autoCloseLeft / 60 * 100) + '%';
     fill.style.transition = 'width 1s linear';
-    fill.style.width = pct;
+    fill.style.width = (autoCloseLeft / 60 * 100) + '%';
     if (autoCloseLeft <= 0) { clearInterval(autoCloseInterval); closeDetailModal(); }
   }, 1000);
 }
@@ -697,107 +799,84 @@ async function detailCmd(action) {
 /* ═══════════════════════════════════════════════════════════════
    YANDEX MAPS (shared loader)
 ═══════════════════════════════════════════════════════════════ */
-let ymapsLoaded = false;
-let ymapsReady  = false;
-let ymapsCallbacks = [];
+let ymapsLoaded = false, ymapsReady = false, ymapsCallbacks = [];
 
 function loadYmaps() {
   if (ymapsLoaded) return;
   ymapsLoaded = true;
-  const key = settings.ymapsKey || DEFAULT_YMAPS_KEY;
   window._ymapsOnLoad = function() {
     ymapsReady = true;
     ymapsCallbacks.forEach(fn => fn());
     ymapsCallbacks = [];
   };
   const s = document.createElement('script');
-  s.src = 'https://api-maps.yandex.ru/2.1/?apikey=' + encodeURIComponent(key) + '&lang=ru_RU&onload=_ymapsOnLoad';
+  s.src = 'https://api-maps.yandex.ru/2.1/?apikey=' + encodeURIComponent(settings.ymapsKey || DEFAULT_YMAPS_KEY) + '&lang=ru_RU&onload=_ymapsOnLoad';
   document.head.appendChild(s);
 }
 
 function whenYmaps(fn) {
-  if (ymapsReady) fn();
-  else { loadYmaps(); ymapsCallbacks.push(fn); }
+  if (ymapsReady) fn(); else { loadYmaps(); ymapsCallbacks.push(fn); }
 }
 
 /* ═══════════════════════════════════════════════════════════════
    MAP PAGE
 ═══════════════════════════════════════════════════════════════ */
-let ymapObj     = null;
-let ymapMarkers = [];
+let ymapObj = null, ymapMarkers = [];
 
 function renderMapPage() {
-  const withCoords = devices.filter(d => d.lat && d.lon);
-  const placeholder = document.getElementById('map-placeholder');
-
-  if (!withCoords.length) {
-    placeholder.style.display = 'flex';
-    return;
-  }
-  placeholder.style.display = 'none';
-
+  const wc = devices.filter(d => d.lat && d.lon);
+  document.getElementById('map-placeholder').style.display = wc.length ? 'none' : 'flex';
+  if (!wc.length) return;
   whenYmaps(() => {
-    if (ymapObj) { updateMapMarkers(withCoords); return; }
-    ymapObj = new ymaps.Map('ymap', { center:[55.75, 37.62], zoom:10, controls:['zoomControl','fullscreenControl'] });
-    updateMapMarkers(withCoords);
+    if (ymapObj) { updateMapMarkers(wc); return; }
+    ymapObj = new ymaps.Map('ymap', { center:[55.75,37.62], zoom:10, controls:['zoomControl','fullscreenControl'] });
+    updateMapMarkers(wc);
   });
 }
 
-function updateMapMarkers(withCoords) {
+function updateMapMarkers(wc) {
   if (!ymapObj) return;
   ymapMarkers.forEach(m => ymapObj.geoObjects.remove(m));
   ymapMarkers = [];
-  withCoords.forEach(dev => {
+  wc.forEach(dev => {
     const pm = new ymaps.Placemark([dev.lat, dev.lon], {
       balloonContent: '<b>' + esc(dev.name) + '</b>' + (dev.address ? '<br>' + esc(dev.address) : '')
-    }, { preset: 'islands#redDotIcon' });
-    ymapObj.geoObjects.add(pm);
-    ymapMarkers.push(pm);
+    }, { preset:'islands#redDotIcon' });
+    ymapObj.geoObjects.add(pm); ymapMarkers.push(pm);
   });
-  if (withCoords.length === 1) {
-    ymapObj.setCenter([withCoords[0].lat, withCoords[0].lon], 15);
-  } else {
-    ymapObj.setBounds(ymapObj.geoObjects.getBounds(), { checkZoomRange:true, zoomMargin:40 });
-  }
+  if (wc.length === 1) ymapObj.setCenter([wc[0].lat, wc[0].lon], 15);
+  else ymapObj.setBounds(ymapObj.geoObjects.getBounds(), { checkZoomRange:true, zoomMargin:40 });
 }
 
 /* ═══════════════════════════════════════════════════════════════
    MAP PICKER
 ═══════════════════════════════════════════════════════════════ */
-let mapPickerObj    = null;
-let mapPickerMarker = null;
-let mapPickerCoords = null;
+let mapPickerObj = null, mapPickerMarker = null, mapPickerCoords = null;
 
 function showMapPicker() {
   document.getElementById('mappicker-overlay').classList.remove('hidden');
   document.getElementById('mappicker-hint').textContent = 'Нажмите на карту для выбора точки';
-
-  const doInit = () => {
+  whenYmaps(() => setTimeout(() => {
     if (mapPickerObj) { mapPickerObj.destroy(); mapPickerObj = null; mapPickerMarker = null; }
     const lat = parseFloat(document.getElementById('e-lat').value) || 55.751244;
     const lon = parseFloat(document.getElementById('e-lon').value) || 37.618423;
-    const hasCoords = !!parseFloat(document.getElementById('e-lat').value);
-    mapPickerObj = new ymaps.Map('mappicker-map', {
-      center: [lat, lon], zoom: hasCoords ? 15 : 10,
-      controls: ['zoomControl', 'typeSelector']
-    });
-    if (hasCoords) _pickerPlaceMarker([lat, lon]);
+    const has = !!parseFloat(document.getElementById('e-lat').value);
+    mapPickerObj = new ymaps.Map('mappicker-map', { center:[lat,lon], zoom:has?15:10, controls:['zoomControl','typeSelector'] });
+    if (has) _pickerPlaceMarker([lat, lon]);
     mapPickerObj.events.add('click', e => _pickerPlaceMarker(e.get('coords')));
-  };
-
-  whenYmaps(() => setTimeout(doInit, 60));
+  }, 60));
 }
 
 function _pickerPlaceMarker(coords) {
   if (mapPickerMarker) mapPickerObj.geoObjects.remove(mapPickerMarker);
   mapPickerMarker = new ymaps.Placemark(coords, {}, { preset:'islands#redDotIcon', draggable:true });
   mapPickerObj.geoObjects.add(mapPickerMarker);
-  mapPickerCoords = { lat: coords[0], lon: coords[1] };
+  mapPickerCoords = { lat:coords[0], lon:coords[1] };
   const hint = document.getElementById('mappicker-hint');
   hint.textContent = coords[0].toFixed(6) + ', ' + coords[1].toFixed(6);
   mapPickerMarker.events.add('dragend', () => {
     const c = mapPickerMarker.geometry.getCoordinates();
-    mapPickerCoords = { lat: c[0], lon: c[1] };
+    mapPickerCoords = { lat:c[0], lon:c[1] };
     hint.textContent = c[0].toFixed(6) + ', ' + c[1].toFixed(6);
   });
 }
@@ -812,14 +891,286 @@ function confirmMapPicker() {
   if (!mapPickerCoords) { toast('Нажмите на карту для выбора точки ❌'); return; }
   document.getElementById('e-lat').value = mapPickerCoords.lat.toFixed(6);
   document.getElementById('e-lon').value = mapPickerCoords.lon.toFixed(6);
-  document.getElementById('e-coord-display').textContent =
-    mapPickerCoords.lat.toFixed(6) + ', ' + mapPickerCoords.lon.toFixed(6);
+  document.getElementById('e-coord-display').textContent = mapPickerCoords.lat.toFixed(6) + ', ' + mapPickerCoords.lon.toFixed(6);
   closeMapPicker();
   toast('Координаты установлены ✓');
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   EVENT LOG
+   PHONES PAGE
+═══════════════════════════════════════════════════════════════ */
+function initPhonesPage() {
+  const sel = document.getElementById('phones-device-sel');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— Выберите устройство —</option>' +
+    devices.map(d => `<option value="${d.id}" ${d.id === cur ? 'selected':''}>${esc(d.name)}</option>`).join('');
+  phonesDevId = cur && devices.find(d => d.id === cur) ? cur : null;
+  if (phonesDevId) loadPhones(); else renderPhoneList([]);
+}
+
+async function loadPhones() {
+  const sel = document.getElementById('phones-device-sel');
+  phonesDevId = sel.value;
+  if (!phonesDevId) { renderPhoneList([]); return; }
+  const dev = devices.find(d => d.id === phonesDevId);
+  if (!dev) return;
+  document.getElementById('phone-list-wrap').innerHTML = '<div class="empty-state" style="padding:20px">Загрузка…</div>';
+  const phones = await fetchPhones(dev);
+  phonesCache[phonesDevId] = phones;
+  renderPhoneList(phones);
+}
+
+function setPhoneTab(tab, btn) {
+  phonesTab = tab;
+  document.querySelectorAll('#page-phones .tb-filter').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderPhoneList(phonesCache[phonesDevId] || []);
+}
+
+function renderPhoneList(all) {
+  const wrap = document.getElementById('phone-list-wrap');
+  if (!phonesDevId) {
+    wrap.innerHTML = '<div class="empty-state"><b>☎</b>Выберите устройство</div>';
+    return;
+  }
+  const phones = all.filter(p => phonesTab === 'perm' ? p.trips === 0 : p.trips > 0);
+  if (!phones.length) {
+    const label = phonesTab === 'perm' ? 'постоянных' : 'гостевых';
+    wrap.innerHTML = `<div class="empty-state" style="padding:30px"><b>☎</b>Нет ${label} номеров<br><small>Нажмите «+ Добавить»</small></div>`;
+    return;
+  }
+  const guestCol = phonesTab === 'guest';
+  wrap.innerHTML = `<div class="phone-card"><table class="log-table">
+    <thead><tr>
+      <th>Номер</th><th>Имя</th>
+      ${guestCol ? '<th>Проходов</th>' : ''}
+      <th></th>
+    </tr></thead>
+    <tbody>
+    ${phones.map(p => {
+      const name = esc(phoneNames[p.number] || '—');
+      let tripsLabel = '';
+      if (guestCol) {
+        tripsLabel = p.trips === 1
+          ? '<span class="badge once">Одноразовый</span>'
+          : `<span class="badge guest">${p.trips} ост.</span>`;
+      }
+      return `<tr>
+        <td style="font-family:monospace;white-space:nowrap">${esc(p.number)}</td>
+        <td>${name}</td>
+        ${guestCol ? `<td>${tripsLabel}</td>` : ''}
+        <td style="text-align:right;white-space:nowrap">
+          <button class="ph-action-btn" onclick="editPhone('${esc(p.number)}')">✏ Ред.</button>
+          <button class="ph-action-btn del" onclick="deletePhone('${esc(p.number)}')">🗑</button>
+        </td>
+      </tr>`;
+    }).join('')}
+    </tbody></table></div>`;
+}
+
+/* Add / Edit phone modal */
+function showAddPhoneModal(editNumber) {
+  document.getElementById('addphone-title').textContent = editNumber ? 'Редактировать телефон' : 'Добавить телефон';
+  document.getElementById('ph-editing-number').value = editNumber || '';
+  document.getElementById('ph-number').value  = editNumber || '';
+  document.getElementById('ph-number').readOnly = !!editNumber;
+  document.getElementById('ph-name').value    = editNumber ? (phoneNames[editNumber] || '') : '';
+  document.getElementById('ph-trips').value   = '1';
+  document.getElementById('ph-perm').checked  = true;
+  document.getElementById('ph-delete-row').style.display = editNumber ? 'flex' : 'none';
+
+  if (editNumber) {
+    // Find in any cached device
+    for (const id of Object.keys(phonesCache)) {
+      const entry = phonesCache[id].find(p => p.number === editNumber);
+      if (entry) {
+        if (entry.trips > 0) {
+          document.getElementById('ph-guest').checked = true;
+          document.getElementById('ph-trips').value = entry.trips;
+        }
+        break;
+      }
+    }
+  }
+  updatePhoneTypeUI();
+
+  // Device checkboxes
+  const devList = document.getElementById('ph-devices-list');
+  if (!devices.length) {
+    devList.innerHTML = '<div style="font-size:12px;color:var(--muted2)">Нет устройств</div>';
+  } else {
+    devList.innerHTML = devices.map(d =>
+      `<label class="device-check-item">
+        <input type="checkbox" value="${d.id}" ${d.id === phonesDevId ? 'checked' : ''}>
+        ${esc(d.name)}
+      </label>`).join('');
+  }
+
+  document.getElementById('addphone-overlay').classList.remove('hidden');
+}
+
+function closeAddPhoneModal() {
+  document.getElementById('addphone-overlay').classList.add('hidden');
+}
+
+function updatePhoneTypeUI() {
+  const isGuest = document.getElementById('ph-guest').checked;
+  document.getElementById('ph-trips-wrap').style.display = isGuest ? 'block' : 'none';
+}
+
+async function savePhone() {
+  const number = document.getElementById('ph-number').value.trim();
+  const name   = document.getElementById('ph-name').value.trim();
+  if (!number) { toast('Укажите номер телефона ❌'); return; }
+
+  const isGuest = document.getElementById('ph-guest').checked;
+  const trips   = isGuest ? (parseInt(document.getElementById('ph-trips').value) || 1) : 0;
+  const today   = new Date().toISOString().slice(0, 10);
+  const editNum = document.getElementById('ph-editing-number').value;
+
+  const selected = [...document.querySelectorAll('#ph-devices-list input[type=checkbox]:checked')]
+    .map(cb => cb.value);
+  if (!selected.length) { toast('Выберите хотя бы одно устройство ❌'); return; }
+
+  if (name) phoneNames[number] = name;
+  else delete phoneNames[number];
+  persistPhoneNames();
+
+  let errors = 0;
+  for (const devId of selected) {
+    const dev = devices.find(d => d.id === devId);
+    if (!dev) continue;
+    try {
+      let phones = phonesCache[devId] ? [...phonesCache[devId]] : await fetchPhones(dev);
+      if (editNum) phones = phones.filter(p => p.number !== editNum);
+      phones     = phones.filter(p => p.number !== number);
+      phones.push({ number, date: today, trips });
+      await writePhones(dev, phones);
+      phonesCache[devId] = phones;
+    } catch(e) { errors++; }
+  }
+
+  closeAddPhoneModal();
+  if (errors) toast(`Ошибка записи на ${errors} уст. ❌`, 4000);
+  else toast('Сохранено ✓');
+  renderPhoneList(phonesCache[phonesDevId] || []);
+}
+
+function editPhone(number) { showAddPhoneModal(number); }
+
+async function deletePhone(number) {
+  if (!confirm(`Удалить ${number} с этого устройства?`)) return;
+  const dev = devices.find(d => d.id === phonesDevId);
+  if (!dev) return;
+  try {
+    let phones = phonesCache[phonesDevId] ? [...phonesCache[phonesDevId]] : await fetchPhones(dev);
+    phones = phones.filter(p => p.number !== number);
+    await writePhones(dev, phones);
+    phonesCache[phonesDevId] = phones;
+    renderPhoneList(phones);
+    toast('Удалено ✓');
+  } catch(e) { toast('Ошибка удаления ❌', 3500); }
+}
+
+async function deletePhoneFromAll() {
+  const number = document.getElementById('ph-editing-number').value;
+  if (!number || !confirm(`Удалить ${number} со ВСЕХ устройств?`)) return;
+  closeAddPhoneModal();
+  let errors = 0;
+  for (const dev of devices) {
+    if (!phonesCache[dev.id] && (!dev.functionUrl || !dev.bucket)) continue;
+    try {
+      let phones = phonesCache[dev.id] ? [...phonesCache[dev.id]] : await fetchPhones(dev);
+      const before = phones.length;
+      phones = phones.filter(p => p.number !== number);
+      if (phones.length !== before) {
+        await writePhones(dev, phones);
+        phonesCache[dev.id] = phones;
+      }
+    } catch(e) { errors++; }
+  }
+  if (errors) toast(`Ошибка на ${errors} уст. ❌`, 4000);
+  else { delete phoneNames[number]; persistPhoneNames(); toast('Удалено со всех устройств ✓'); }
+  renderPhoneList(phonesCache[phonesDevId] || []);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CALL LOG PAGE
+═══════════════════════════════════════════════════════════════ */
+const EVENT_LABELS = {
+  relay_open:   'Открыто',
+  relay_denied: 'Отказано',
+  relay_hold:   'Держать',
+  relay_close:  'Закрыто',
+};
+
+async function loadCallLog() {
+  const wrap = document.getElementById('calllog-content');
+  if (!devices.length) {
+    wrap.innerHTML = '<div class="empty-state"><b>👥</b>Нет устройств</div>';
+    return;
+  }
+  wrap.innerHTML = '<div class="empty-state" style="padding:20px">Загрузка…</div>';
+
+  const all = [];
+  for (const dev of devices) {
+    if (!dev.functionUrl || !dev.bucket) continue;
+    try {
+      const url = buildApiUrl(dev, 'read_file', '&file=calllog.csv');
+      const r   = await fetch(url, { signal: AbortSignal.timeout(8000) });
+      if (!r.ok) continue;
+      const text = (await r.text()).trim();
+      if (!text || text === '\n') continue;
+      for (const raw of text.split('\n')) {
+        const line = raw.trim(); if (!line) continue;
+        const parts = line.split(',');
+        if (parts.length < 3) continue;
+        const [ts, number, event] = parts;
+        if (!ts || ts === 'timestamp') continue;
+        const time = new Date(ts.trim().endsWith('Z') ? ts.trim() : ts.trim() + 'Z').getTime();
+        all.push({ ts: ts.trim(), number: number.trim(), event: event.trim(), time,
+                   deviceName: dev.name, deviceId: dev.id });
+      }
+    } catch(e) {}
+  }
+
+  if (!all.length) {
+    wrap.innerHTML = `<div class="empty-state"><b>👥</b>Нет записей<br>
+      <small>Журнал заполняется устройством автоматически при каждом проходе по телефонному звонку</small></div>`;
+    return;
+  }
+
+  all.sort((a, b) => b.time - a.time);
+
+  wrap.innerHTML = `<div style="overflow-x:auto"><table class="log-table">
+    <thead><tr>
+      <th>Время</th><th>Объект</th><th>Номер</th><th>Имя</th><th>Тип</th><th>Событие</th>
+    </tr></thead>
+    <tbody>
+    ${all.map(e => {
+      const d  = new Date(e.time);
+      const ts = d.toLocaleDateString('ru-RU') + ' ' + d.toLocaleTimeString('ru-RU');
+      const isOk = e.event !== 'relay_denied';
+      // Find phone type from any cache
+      let phType = '—';
+      for (const id of Object.keys(phonesCache)) {
+        const entry = phonesCache[id].find(p => p.number === e.number);
+        if (entry) { phType = entry.trips === 0 ? '<span class="badge perm">Постоянный</span>' : '<span class="badge guest">Гостевой</span>'; break; }
+      }
+      return `<tr>
+        <td style="white-space:nowrap;color:var(--muted2)">${ts}</td>
+        <td>${esc(e.deviceName)}</td>
+        <td style="font-family:monospace;white-space:nowrap">${esc(e.number)}</td>
+        <td>${esc(phoneNames[e.number] || '—')}</td>
+        <td>${phType}</td>
+        <td class="${isOk?'log-ok':'log-err'}">${esc(EVENT_LABELS[e.event] || e.event)}</td>
+      </tr>`;
+    }).join('')}
+    </tbody></table></div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   COMMANDS LOG
 ═══════════════════════════════════════════════════════════════ */
 let logFilter = 'all';
 let logSort   = { field:'time', dir:-1 };
@@ -833,7 +1184,7 @@ function addEvent(dev, eventText, ok) {
 
 function setLogFilter(f, btn) {
   logFilter = f;
-  document.querySelectorAll('.log-filter').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#page-log .tb-filter').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   renderLogRows();
 }
@@ -852,40 +1203,31 @@ function renderLogRows() {
   let rows = events.slice();
   if (logFilter === 'ok')  rows = rows.filter(e => e.ok);
   if (logFilter === 'err') rows = rows.filter(e => !e.ok);
-
   rows.sort((a, b) => {
     let av, bv;
     if (logSort.field === 'time')   { av = a.time;       bv = b.time; }
     if (logSort.field === 'device') { av = a.deviceName; bv = b.deviceName; }
     if (logSort.field === 'event')  { av = a.event;      bv = b.event; }
     if (logSort.field === 'status') { av = a.ok ? 1 : 0; bv = b.ok ? 1 : 0; }
-    if (av < bv) return -logSort.dir;
-    if (av > bv) return  logSort.dir;
-    return 0;
+    if (av < bv) return -logSort.dir; if (av > bv) return logSort.dir; return 0;
   });
-
   const tbody = document.getElementById('log-tbody');
-  if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="4" class="log-empty">Нет записей</td></tr>';
-    return;
-  }
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="4" class="log-empty">Нет записей</td></tr>'; return; }
   tbody.innerHTML = rows.map(e => {
-    const d  = new Date(e.time);
+    const d = new Date(e.time);
     const ts = d.toLocaleDateString('ru-RU') + ' ' + d.toLocaleTimeString('ru-RU');
     return `<tr>
       <td style="white-space:nowrap;color:var(--muted2)">${ts}</td>
       <td>${esc(e.deviceName)}</td>
       <td>${esc(e.event)}</td>
-      <td class="${e.ok ? 'log-ok' : 'log-err'}">${e.ok ? 'OK' : 'Ошибка'}</td>
+      <td class="${e.ok?'log-ok':'log-err'}">${e.ok?'OK':'Ошибка'}</td>
     </tr>`;
   }).join('');
 }
 
 function clearLog() {
-  if (!confirm('Очистить весь журнал?')) return;
-  events = [];
-  persistEvents();
-  renderLogRows();
+  if (!confirm('Очистить журнал команд?')) return;
+  events = []; persistEvents(); renderLogRows();
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -897,16 +1239,15 @@ function showEditModal(id) {
   editingDeviceId = id;
   const dev = id ? devices.find(d => d.id === id) : null;
   document.getElementById('edit-modal-title').textContent = dev ? 'Редактировать устройство' : 'Новое устройство';
-  document.getElementById('e-id').value      = id || '';
-  document.getElementById('e-name').value   = dev ? dev.name    || '' : '';
-  document.getElementById('e-addr').value   = dev ? dev.address || '' : '';
-  document.getElementById('e-lat').value    = dev ? dev.lat     || '' : '';
-  document.getElementById('e-lon').value    = dev ? dev.lon     || '' : '';
-  document.getElementById('e-url').value    = dev ? dev.functionUrl || '' : '';
-  document.getElementById('e-bucket').value = dev ? dev.bucket  || '' : '';
-  document.getElementById('e-file').value   = dev ? dev.storageFile || 'relay.txt' : 'relay.txt';
-  document.getElementById('e-pos').value    = dev ? (dev.charPos != null ? dev.charPos : 0) : 0;
-  document.getElementById('e-confirm').value= dev ? dev.confirmChar || '0' : '0';
+  document.getElementById('e-name').value    = dev ? dev.name         || '' : '';
+  document.getElementById('e-addr').value    = dev ? dev.address      || '' : '';
+  document.getElementById('e-lat').value     = dev ? dev.lat          || '' : '';
+  document.getElementById('e-lon').value     = dev ? dev.lon          || '' : '';
+  document.getElementById('e-url').value     = dev ? dev.functionUrl  || '' : '';
+  document.getElementById('e-bucket').value  = dev ? dev.bucket       || '' : '';
+  document.getElementById('e-file').value    = dev ? dev.storageFile  || 'relay.txt' : 'relay.txt';
+  document.getElementById('e-pos').value     = dev ? (dev.charPos  != null ? dev.charPos  : 0) : 0;
+  document.getElementById('e-confirm').value = dev ? dev.confirmChar  || '0' : '0';
   document.getElementById('e-coord-display').textContent = '';
   document.getElementById('delete-btn-row').style.display = dev ? 'flex' : 'none';
   document.getElementById('edit-overlay').classList.remove('hidden');
@@ -919,36 +1260,24 @@ function closeEditModal() {
 
 function saveDevice() {
   const name = document.getElementById('e-name').value.trim();
-  const url  = document.getElementById('e-url').value.trim();
-  const bkt  = document.getElementById('e-bucket').value.trim();
   if (!name) { toast('Укажите название ❌'); return; }
-
-  const lat = parseFloat(document.getElementById('e-lat').value) || null;
-  const lon = parseFloat(document.getElementById('e-lon').value) || null;
-
   const data = {
-    name,
-    address:     document.getElementById('e-addr').value.trim(),
-    lat, lon,
-    functionUrl: url,
-    bucket:      bkt,
-    storageFile: document.getElementById('e-file').value.trim()    || 'relay.txt',
-    charPos:     parseInt(document.getElementById('e-pos').value)  || 0,
-    confirmChar: document.getElementById('e-confirm').value.trim() || '0',
+    name, address: document.getElementById('e-addr').value.trim(),
+    lat: parseFloat(document.getElementById('e-lat').value) || null,
+    lon: parseFloat(document.getElementById('e-lon').value) || null,
+    functionUrl:  document.getElementById('e-url').value.trim(),
+    bucket:       document.getElementById('e-bucket').value.trim(),
+    storageFile:  document.getElementById('e-file').value.trim()    || 'relay.txt',
+    charPos:      parseInt(document.getElementById('e-pos').value)  || 0,
+    confirmChar:  document.getElementById('e-confirm').value.trim() || '0',
   };
-
   if (editingDeviceId) {
     const idx = devices.findIndex(d => d.id === editingDeviceId);
-    if (idx >= 0) devices[idx] = Object.assign({ id: editingDeviceId }, data);
+    if (idx >= 0) devices[idx] = Object.assign({ id:editingDeviceId }, data);
   } else {
-    devices.push(Object.assign({ id: genId() }, data));
+    devices.push(Object.assign({ id:genId() }, data));
   }
-
-  persistDevices();
-  closeEditModal();
-  renderDashboard();
-  toast('Сохранено ✓');
-  pollAll();
+  persistDevices(); closeEditModal(); renderDashboard(); toast('Сохранено ✓'); pollAll();
 }
 
 function deleteDevice() {
@@ -956,11 +1285,8 @@ function deleteDevice() {
   const dev = devices.find(d => d.id === editingDeviceId);
   if (!dev || !confirm('Удалить устройство «' + dev.name + '»?')) return;
   devices = devices.filter(d => d.id !== editingDeviceId);
-  delete deviceStatus[editingDeviceId];
-  persistDevices();
-  closeEditModal();
-  renderDashboard();
-  toast('Устройство удалено');
+  delete deviceStatus[editingDeviceId]; delete phonesCache[editingDeviceId];
+  persistDevices(); closeEditModal(); renderDashboard(); toast('Устройство удалено');
 }
 
 async function geocodeAddr() {
@@ -969,21 +1295,16 @@ async function geocodeAddr() {
   const display = document.getElementById('e-coord-display');
   display.textContent = 'Поиск…';
   try {
-    const url = 'https://geocode-maps.yandex.ru/1.x/?format=json&geocode=' + encodeURIComponent(addr);
-    const r   = await fetch(url, { signal: AbortSignal.timeout(8000) });
-    const js  = await r.json();
-    const pos = js?.response?.GeoObjectCollection?.featureMember?.[0]
-                  ?.GeoObject?.Point?.pos;
+    const r  = await fetch('https://geocode-maps.yandex.ru/1.x/?format=json&geocode=' + encodeURIComponent(addr), { signal:AbortSignal.timeout(8000) });
+    const js = await r.json();
+    const pos = js?.response?.GeoObjectCollection?.featureMember?.[0]?.GeoObject?.Point?.pos;
     if (!pos) throw new Error('Не найдено');
     const [lon, lat] = pos.split(' ').map(Number);
     document.getElementById('e-lat').value = lat;
     document.getElementById('e-lon').value = lon;
     display.textContent = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
     toast('Координаты получены ✓');
-  } catch(e) {
-    display.textContent = 'Ошибка: ' + e.message;
-    toast('Геокодирование не удалось ❌', 3500);
-  }
+  } catch(e) { display.textContent = 'Ошибка: ' + e.message; toast('Геокодирование не удалось ❌', 3500); }
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1025,8 +1346,8 @@ function esc(s) {
 
 function fmtAge(sec) {
   const s = Math.floor(sec);
-  if (s < 60)  return s + 'с';
-  if (s < 3600) { const m = Math.floor(s/60); return m + 'м ' + (s%60) + 'с'; }
+  if (s < 60)   return s + 'с';
+  if (s < 3600) return Math.floor(s/60) + 'м ' + (s%60) + 'с';
   return Math.floor(s/3600) + 'ч ' + Math.floor((s%3600)/60) + 'м';
 }
 
@@ -1035,17 +1356,16 @@ function fmtAge(sec) {
 ═══════════════════════════════════════════════════════════════ */
 function tickClock() {
   const now = new Date();
-  const h = String(now.getHours()).padStart(2,'0');
-  const m = String(now.getMinutes()).padStart(2,'0');
-  const s = String(now.getSeconds()).padStart(2,'0');
-  document.getElementById('topbar-clock').textContent = h + ':' + m + ':' + s;
+  document.getElementById('topbar-clock').textContent =
+    String(now.getHours()).padStart(2,'0') + ':' +
+    String(now.getMinutes()).padStart(2,'0') + ':' +
+    String(now.getSeconds()).padStart(2,'0');
 }
 
 /* ═══════════════════════════════════════════════════════════════
    INIT
 ═══════════════════════════════════════════════════════════════ */
 loadState();
-
 document.title = settings.portalName || 'Система управления GSM.Relay';
 
 loadYmaps();
@@ -1057,15 +1377,11 @@ setInterval(pollAll, 60000);
 setInterval(tickClock, 1000);
 tickClock();
 
-// Global click → hide menus
 document.addEventListener('click', () => hideCtxMenu());
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
-    hideCtxMenu();
-    closeDetailModal();
-    closeMapPicker();
-    closeEditModal();
-    closeSettingsModal();
+    hideCtxMenu(); closeDetailModal(); closeMapPicker(); closeEditModal();
+    closeAddPhoneModal(); closeSettingsModal();
   }
 });
 </script>
