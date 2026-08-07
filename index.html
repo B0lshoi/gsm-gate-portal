@@ -17,11 +17,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter',Arial,sans-serif;
      background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden}
 
 /* ── Topbar ── */
-.topbar{height:50px;background:#0D0D0D;border-bottom:2px solid var(--primary);
+.topbar{height:54px;background:#0D0D0D;border-bottom:2px solid var(--primary);
         display:flex;align-items:center;padding:0 18px;gap:12px;flex-shrink:0;z-index:30}
-.topbar-logo{font-size:16px;font-weight:800;color:var(--primary);letter-spacing:-.3px}
-.topbar-name{font-size:13px;color:var(--muted2);flex:1}
-.topbar-time{font-size:12px;color:var(--muted2);font-variant-numeric:tabular-nums}
+.topbar-info{display:flex;flex-direction:column;gap:1px;flex:1}
+.topbar-logo{font-size:14px;font-weight:800;color:var(--primary);letter-spacing:-.3px;line-height:1.2}
+.topbar-sub{font-size:10px;color:var(--muted2)}
+.topbar-time{font-size:12px;color:var(--muted2);font-variant-numeric:tabular-nums;white-space:nowrap}
 .topbar-btn{background:none;border:none;color:var(--muted);font-size:19px;cursor:pointer;
             padding:4px 6px;border-radius:6px;line-height:1;transition:color .15s}
 .topbar-btn:hover{color:var(--text)}
@@ -118,7 +119,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter',Arial,sans-serif;
                  align-items:center;justify-content:center;gap:10px;color:var(--muted)}
 
 /* ── Log page ── */
-.log-toolbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.log-toolbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
 .log-filter{padding:6px 12px;background:#1A1A1A;border:1px solid var(--border);
             border-radius:8px;font-size:12px;color:var(--text);font-family:inherit;cursor:pointer}
 .log-filter.active{border-color:var(--primary);color:var(--primary)}
@@ -136,6 +137,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter',Arial,sans-serif;
 .log-table tr:last-child td{border-bottom:none}
 .log-ok{color:var(--ok)}.log-err{color:var(--err)}
 .log-empty{text-align:center;color:var(--muted);padding:30px;font-size:13px}
+
+/* ── Map picker modal ── */
+.mappicker-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;
+                   display:flex;align-items:center;justify-content:center}
+.mappicker-overlay.hidden{display:none}
+.mappicker-modal{background:#141414;border-radius:18px;overflow:hidden;
+                 width:100%;max-width:600px;border:1px solid var(--border);
+                 display:flex;flex-direction:column;max-height:90vh}
+.mappicker-header{display:flex;align-items:center;justify-content:space-between;
+                  padding:12px 16px;border-bottom:1px solid var(--border)}
+.mappicker-title{font-size:14px;font-weight:700;color:var(--primary)}
+#mappicker-map{width:100%;height:400px;flex-shrink:0}
+.mappicker-footer{padding:12px 16px;border-top:1px solid var(--border);
+                  display:flex;align-items:center;gap:8px}
+.mappicker-hint{flex:1;font-size:12px;color:var(--muted2)}
+.mappicker-btn{padding:8px 16px;border:none;border-radius:8px;font-size:13px;font-weight:600;
+               cursor:pointer;font-family:inherit;transition:all .1s}
+.mappicker-btn.ok{background:var(--primary);color:#0A0A0A}
+.mappicker-btn.cancel{background:#1A1A1A;color:var(--text);border:1px solid var(--border)}
 
 /* ── Edit modal / Settings modal (shared form styles) ── */
 .form-label{display:block;font-size:10px;font-weight:700;letter-spacing:.7px;
@@ -188,8 +208,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter',Arial,sans-serif;
 
 <!-- Topbar -->
 <div class="topbar">
-  <div class="topbar-logo">GSM.Gate</div>
-  <div class="topbar-name" id="portal-name-display">Портал управления</div>
+  <div class="topbar-info">
+    <div class="topbar-logo">Система управления GSM.Relay</div>
+    <div class="topbar-sub">от PropTech.Яндекс</div>
+  </div>
   <div class="topbar-time" id="topbar-clock">--:--:--</div>
   <button class="topbar-btn" title="Настройки портала" onclick="showSettingsModal()">⚙</button>
 </div>
@@ -306,6 +328,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter',Arial,sans-serif;
     <div style="display:flex;gap:6px;align-items:flex-start">
       <input class="form-input" id="e-addr" type="text" placeholder="Москва, ул. Примерная, 1" style="flex:1">
       <button class="geocode-btn" onclick="geocodeAddr()">Найти</button>
+      <button class="geocode-btn" onclick="showMapPicker()" style="white-space:nowrap">📍 На карте</button>
     </div>
     <div class="coord-display" id="e-coord-display"></div>
 
@@ -361,6 +384,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter',Arial,sans-serif;
   </div>
 </div>
 
+<!-- Map picker modal -->
+<div class="mappicker-overlay hidden" id="mappicker-overlay">
+  <div class="mappicker-modal" onclick="event.stopPropagation()">
+    <div class="mappicker-header">
+      <div class="mappicker-title">📍 Укажите точку на карте</div>
+      <button class="modal-close" style="position:static" onclick="closeMapPicker()">×</button>
+    </div>
+    <div id="mappicker-map"></div>
+    <div class="mappicker-footer">
+      <div class="mappicker-hint" id="mappicker-hint">Нажмите на карту для выбора точки</div>
+      <button class="mappicker-btn ok" onclick="confirmMapPicker()">Подтвердить</button>
+      <button class="mappicker-btn cancel" onclick="closeMapPicker()">Отмена</button>
+    </div>
+  </div>
+</div>
+
 <!-- Settings modal -->
 <div class="modal-overlay hidden" id="settings-overlay" onclick="closeSettingsModal()">
   <div class="modal" onclick="event.stopPropagation()" style="max-width:420px">
@@ -394,9 +433,11 @@ const K_EVENTS   = 'gsm_events_v2';
 const K_SETTINGS = 'gsm_settings_v2';
 const MAX_EVENTS = 500;
 
+const DEFAULT_YMAPS_KEY = '689cf60d-9f2c-41a7-8ca3-6ff5c51ac0f8';
+
 let devices  = [];  // [{id,name,address,lat,lon,functionUrl,bucket,storageFile,charPos,confirmChar}]
 let events   = [];  // [{id,time,deviceId,deviceName,event,ok}]
-let settings = { portalName:'GSM.Gate Portal', ymapsKey:'' };
+let settings = { portalName:'Система управления GSM.Relay', ymapsKey:'' };
 
 let deviceStatus = {}; // {deviceId: {online,stale,offline,age,relayVal}}
 
@@ -654,13 +695,36 @@ async function detailCmd(action) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   MAP PAGE
+   YANDEX MAPS (shared loader)
 ═══════════════════════════════════════════════════════════════ */
 let ymapsLoaded = false;
 let ymapsReady  = false;
+let ymapsCallbacks = [];
+
+function loadYmaps() {
+  if (ymapsLoaded) return;
+  ymapsLoaded = true;
+  const key = settings.ymapsKey || DEFAULT_YMAPS_KEY;
+  window._ymapsOnLoad = function() {
+    ymapsReady = true;
+    ymapsCallbacks.forEach(fn => fn());
+    ymapsCallbacks = [];
+  };
+  const s = document.createElement('script');
+  s.src = 'https://api-maps.yandex.ru/2.1/?apikey=' + encodeURIComponent(key) + '&lang=ru_RU&onload=_ymapsOnLoad';
+  document.head.appendChild(s);
+}
+
+function whenYmaps(fn) {
+  if (ymapsReady) fn();
+  else { loadYmaps(); ymapsCallbacks.push(fn); }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MAP PAGE
+═══════════════════════════════════════════════════════════════ */
 let ymapObj     = null;
 let ymapMarkers = [];
-let ymapsCallbacks = [];
 
 function renderMapPage() {
   const withCoords = devices.filter(d => d.lat && d.lon);
@@ -672,62 +736,86 @@ function renderMapPage() {
   }
   placeholder.style.display = 'none';
 
-  const key = settings.ymapsKey;
-  if (!key) {
-    // Static maps grid
-    document.getElementById('ymap').innerHTML = withCoords.map(dev => `
-      <div style="margin-bottom:10px">
-        <div style="font-size:12px;color:var(--muted2);margin-bottom:4px">${esc(dev.name)}</div>
-        <img src="https://static-maps.yandex.ru/1.x/?lang=ru_RU&ll=${dev.lon},${dev.lat}&z=15&size=600,160&l=map&pt=${dev.lon},${dev.lat},pm2rdm"
-             style="width:100%;border-radius:8px;display:block" alt="${esc(dev.name)}">
-      </div>`).join('');
-    return;
-  }
-
-  // Yandex Maps JS API
-  if (!ymapsLoaded) {
-    ymapsLoaded = true;
-    window._ymapsOnLoad = function() {
-      ymapsReady = true;
-      ymapsCallbacks.forEach(fn => fn());
-      ymapsCallbacks = [];
-    };
-    const s = document.createElement('script');
-    s.src = 'https://api-maps.yandex.ru/2.1/?apikey=' + encodeURIComponent(key) + '&lang=ru_RU&onload=_ymapsOnLoad';
-    document.head.appendChild(s);
-  }
-
-  const doInit = () => {
-    if (ymapObj) {
-      updateMapMarkers(withCoords);
-      return;
-    }
+  whenYmaps(() => {
+    if (ymapObj) { updateMapMarkers(withCoords); return; }
     ymapObj = new ymaps.Map('ymap', { center:[55.75, 37.62], zoom:10, controls:['zoomControl','fullscreenControl'] });
     updateMapMarkers(withCoords);
-  };
-
-  if (ymapsReady) doInit();
-  else ymapsCallbacks.push(doInit);
+  });
 }
 
 function updateMapMarkers(withCoords) {
   if (!ymapObj) return;
   ymapMarkers.forEach(m => ymapObj.geoObjects.remove(m));
   ymapMarkers = [];
-  const bounds = [];
   withCoords.forEach(dev => {
     const pm = new ymaps.Placemark([dev.lat, dev.lon], {
       balloonContent: '<b>' + esc(dev.name) + '</b>' + (dev.address ? '<br>' + esc(dev.address) : '')
     }, { preset: 'islands#redDotIcon' });
     ymapObj.geoObjects.add(pm);
     ymapMarkers.push(pm);
-    bounds.push([dev.lat, dev.lon]);
   });
-  if (bounds.length === 1) {
-    ymapObj.setCenter(bounds[0], 15);
-  } else if (bounds.length > 1) {
+  if (withCoords.length === 1) {
+    ymapObj.setCenter([withCoords[0].lat, withCoords[0].lon], 15);
+  } else {
     ymapObj.setBounds(ymapObj.geoObjects.getBounds(), { checkZoomRange:true, zoomMargin:40 });
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MAP PICKER
+═══════════════════════════════════════════════════════════════ */
+let mapPickerObj    = null;
+let mapPickerMarker = null;
+let mapPickerCoords = null;
+
+function showMapPicker() {
+  document.getElementById('mappicker-overlay').classList.remove('hidden');
+  document.getElementById('mappicker-hint').textContent = 'Нажмите на карту для выбора точки';
+
+  const doInit = () => {
+    if (mapPickerObj) { mapPickerObj.destroy(); mapPickerObj = null; mapPickerMarker = null; }
+    const lat = parseFloat(document.getElementById('e-lat').value) || 55.751244;
+    const lon = parseFloat(document.getElementById('e-lon').value) || 37.618423;
+    const hasCoords = !!parseFloat(document.getElementById('e-lat').value);
+    mapPickerObj = new ymaps.Map('mappicker-map', {
+      center: [lat, lon], zoom: hasCoords ? 15 : 10,
+      controls: ['zoomControl', 'typeSelector']
+    });
+    if (hasCoords) _pickerPlaceMarker([lat, lon]);
+    mapPickerObj.events.add('click', e => _pickerPlaceMarker(e.get('coords')));
+  };
+
+  whenYmaps(() => setTimeout(doInit, 60));
+}
+
+function _pickerPlaceMarker(coords) {
+  if (mapPickerMarker) mapPickerObj.geoObjects.remove(mapPickerMarker);
+  mapPickerMarker = new ymaps.Placemark(coords, {}, { preset:'islands#redDotIcon', draggable:true });
+  mapPickerObj.geoObjects.add(mapPickerMarker);
+  mapPickerCoords = { lat: coords[0], lon: coords[1] };
+  const hint = document.getElementById('mappicker-hint');
+  hint.textContent = coords[0].toFixed(6) + ', ' + coords[1].toFixed(6);
+  mapPickerMarker.events.add('dragend', () => {
+    const c = mapPickerMarker.geometry.getCoordinates();
+    mapPickerCoords = { lat: c[0], lon: c[1] };
+    hint.textContent = c[0].toFixed(6) + ', ' + c[1].toFixed(6);
+  });
+}
+
+function closeMapPicker() {
+  document.getElementById('mappicker-overlay').classList.add('hidden');
+  if (mapPickerObj) { mapPickerObj.destroy(); mapPickerObj = null; mapPickerMarker = null; }
+  mapPickerCoords = null;
+}
+
+function confirmMapPicker() {
+  if (!mapPickerCoords) { toast('Нажмите на карту для выбора точки ❌'); return; }
+  document.getElementById('e-lat').value = mapPickerCoords.lat.toFixed(6);
+  document.getElementById('e-lon').value = mapPickerCoords.lon.toFixed(6);
+  document.getElementById('e-coord-display').textContent =
+    mapPickerCoords.lat.toFixed(6) + ', ' + mapPickerCoords.lon.toFixed(6);
+  closeMapPicker();
+  toast('Координаты установлены ✓');
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -912,10 +1000,9 @@ function closeSettingsModal() {
 }
 
 function saveSettingsModal() {
-  settings.portalName = document.getElementById('cfg-portalname').value.trim() || 'GSM.Gate Portal';
+  settings.portalName = document.getElementById('cfg-portalname').value.trim() || 'Система управления GSM.Relay';
   settings.ymapsKey   = document.getElementById('cfg-ymapskey').value.trim();
   _persistSettings();
-  document.getElementById('portal-name-display').textContent = settings.portalName;
   document.title = settings.portalName;
   closeSettingsModal();
   toast('Настройки сохранены ✓');
@@ -959,9 +1046,9 @@ function tickClock() {
 ═══════════════════════════════════════════════════════════════ */
 loadState();
 
-document.getElementById('portal-name-display').textContent = settings.portalName;
-document.title = settings.portalName;
+document.title = settings.portalName || 'Система управления GSM.Relay';
 
+loadYmaps();
 renderDashboard();
 renderLogRows();
 pollAll();
@@ -976,6 +1063,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     hideCtxMenu();
     closeDetailModal();
+    closeMapPicker();
     closeEditModal();
     closeSettingsModal();
   }
