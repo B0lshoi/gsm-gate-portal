@@ -721,8 +721,9 @@ function hideCtxMenu() {
 }
 
 async function ctxAction(action) {
+  const id = ctxDeviceId;   // сохранить ДО hideCtxMenu, которая обнуляет ctxDeviceId
   hideCtxMenu();
-  const dev = devices.find(d => d.id === ctxDeviceId);
+  const dev = devices.find(d => d.id === id);
   if (!dev) return;
   if (action === 'detail') { showDetailModal(dev.id); return; }
   if (action === 'edit')   { showEditModal(dev.id);   return; }
