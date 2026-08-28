@@ -59,6 +59,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter',Arial,sans-serif;
 .tile{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;
       cursor:pointer;transition:border-color .15s,box-shadow .15s;position:relative;user-select:none}
 .tile:hover{border-color:#333;box-shadow:0 4px 20px rgba(0,0,0,.4)}
+.tile-pending{border-color:#5C5C00;background:#141400;opacity:.85}
+.tile-pending:hover{border-color:#AAAA00}
+.pending-section-hdr{font-size:11px;font-weight:700;letter-spacing:.8px;color:#AAAA00;
+  text-transform:uppercase;padding:14px 0 6px;opacity:.8}
 .tile-dot{width:8px;height:8px;border-radius:50%;background:#2E2E2E;flex-shrink:0;
           transition:background .4s,box-shadow .4s}
 .tile-dot.online{background:var(--ok);box-shadow:0 0 0 3px rgba(0,204,102,.2)}
@@ -224,6 +228,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter',Arial,sans-serif;
   .add-device-btn{padding:9px}
 }
 </style>
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 </head>
 <body>
 
@@ -273,7 +278,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter',Arial,sans-serif;
 
     <!-- Dashboard -->
     <div class="page active" id="page-dashboard">
-      <div class="page-title">Дашборд</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <div class="page-title" style="margin-bottom:0">Дашборд</div>
+        <button class="geocode-btn" id="scan-btn" onclick="manualScan()" title="Поиск новых устройств">↻ Сканировать</button>
+      </div>
       <div class="tile-grid" id="tile-grid"></div>
     </div>
 
@@ -296,7 +304,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter',Arial,sans-serif;
         <select id="phones-device-sel" class="form-input" style="max-width:240px;padding:7px 10px;font-size:13px" onchange="loadPhones()">
           <option value="">— Выберите устройство —</option>
         </select>
-        <button class="form-btn primary" style="flex:0;padding:8px 16px;font-size:13px;min-width:0" onclick="showAddPhoneModal(null)">+ Добавить</button>
+        <button class="form-btn primary" style="flex:none;padding:8px 16px;font-size:13px;white-space:nowrap" onclick="showAddPhoneModal(null)">+ Добавить</button>
       </div>
       <div class="toolbar">
         <button class="tb-filter active" id="phones-tab-perm"  onclick="setPhoneTab('perm',this)">Постоянные</button>
@@ -442,6 +450,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter',Arial,sans-serif;
       </div>
     </div>
 
+    <div>
+      <label class="form-label">MQTT Topic ID <span style="font-size:11px;color:var(--muted)">(авто из SIM, если пусто)</span></label>
+      <input class="form-input" id="e-mqtttid" type="text" placeholder="79001234567">
+    </div>
+
     <div class="form-btn-row">
       <button class="form-btn primary" onclick="saveDevice()">💾 Сохранить</button>
       <button class="form-btn secondary" onclick="closeEditModal()">Отмена</button>
@@ -497,6 +510,36 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter',Arial,sans-serif;
   </div>
 </div>
 
+<!-- Confirm discovered device modal -->
+<div class="modal-overlay hidden" id="confirm-overlay" onclick="closeConfirmModal()">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:440px">
+    <button class="modal-close" onclick="closeConfirmModal()">×</button>
+    <div class="modal-title">Обнаружено устройство</div>
+    <div id="confirm-info" style="font-size:12px;color:var(--muted2);margin-bottom:14px;line-height:1.7"></div>
+    <label class="form-label">Название устройства</label>
+    <input class="form-input" id="confirm-name" type="text" placeholder="Ворота / Дверь / Шлагбаум">
+    <div style="margin:14px 0 6px;font-size:12px;color:var(--muted2)">
+      Проверьте что это правильное устройство — нажмите «Открыть», реле должно сработать:
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <button class="form-btn" id="confirm-test-btn" onclick="confirmTestOpen()" style="flex:none">
+        ▶ Открыть (тест)
+      </button>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+        <input type="checkbox" id="confirm-heard" onchange="document.getElementById('confirm-add-btn').disabled=!this.checked">
+        Реле сработало ✓
+      </label>
+    </div>
+    <button class="form-btn primary" id="confirm-add-btn" onclick="confirmAddDevice()" disabled>
+      + Добавить устройство
+    </button>
+    <button class="form-btn" onclick="dismissPending()" style="margin-top:8px;width:100%">
+      Пропустить
+    </button>
+    <input type="hidden" id="confirm-pending-id">
+  </div>
+</div>
+
 <!-- Settings modal -->
 <div class="modal-overlay hidden" id="settings-overlay" onclick="closeSettingsModal()">
   <div class="modal" onclick="event.stopPropagation()" style="max-width:420px">
@@ -526,6 +569,7 @@ const K_DEVICES     = 'gsm_devices_v2';
 const K_EVENTS      = 'gsm_events_v2';
 const K_SETTINGS    = 'gsm_settings_v2';
 const K_PHONE_NAMES = 'gsm_phone_names_v1';
+const K_PENDING     = 'gsm_pending_v1';
 const MAX_EVENTS    = 500;
 const DEFAULT_YMAPS_KEY = '689cf60d-9f2c-41a7-8ca3-6ff5c51ac0f8';
 
@@ -536,16 +580,19 @@ let phoneNames   = {};   // { number: name }
 let phonesCache  = {};   // { deviceId: [{number,date,trips}] }
 let phonesTab    = 'perm';
 let phonesDevId  = null;
-let deviceStatus = {};
+let deviceStatus  = {};
+let pendingDevices = [];  // авто-обнаруженные, ещё не подтверждённые
 
 function loadState() {
-  try { devices    = JSON.parse(localStorage.getItem(K_DEVICES))     || []; } catch(e){ devices = []; }
-  try { events     = JSON.parse(localStorage.getItem(K_EVENTS))      || []; } catch(e){ events = []; }
-  try { const s    = JSON.parse(localStorage.getItem(K_SETTINGS));
+  try { devices       = JSON.parse(localStorage.getItem(K_DEVICES))     || []; } catch(e){ devices = []; }
+  try { events        = JSON.parse(localStorage.getItem(K_EVENTS))      || []; } catch(e){ events = []; }
+  try { const s       = JSON.parse(localStorage.getItem(K_SETTINGS));
         if (s) settings = Object.assign(settings, s); } catch(e){}
-  try { phoneNames = JSON.parse(localStorage.getItem(K_PHONE_NAMES)) || {}; } catch(e){ phoneNames = {}; }
+  try { phoneNames    = JSON.parse(localStorage.getItem(K_PHONE_NAMES)) || {}; } catch(e){ phoneNames = {}; }
+  try { pendingDevices = JSON.parse(localStorage.getItem(K_PENDING))    || []; } catch(e){ pendingDevices = []; }
 }
 function persistDevices()   { localStorage.setItem(K_DEVICES,     JSON.stringify(devices));    }
+function _persistPending()  { localStorage.setItem(K_PENDING,     JSON.stringify(pendingDevices)); }
 function persistEvents()    { localStorage.setItem(K_EVENTS,      JSON.stringify(events));     }
 function _persistSettings() { localStorage.setItem(K_SETTINGS,    JSON.stringify(settings));   }
 function persistPhoneNames(){ localStorage.setItem(K_PHONE_NAMES, JSON.stringify(phoneNames)); }
@@ -561,7 +608,33 @@ function buildApiUrl(dev, action, extra) {
   return u;
 }
 
+// Определяем статус устройства: сначала list_devices (богатые данные),
+// фоллбэк на heartbeat.txt (только время).
 async function apiHeartbeat(dev) {
+  // Попытка 1: list_devices (новый формат)
+  try {
+    const url = buildApiUrl(dev, 'list_devices', '');
+    const r   = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (r.ok) {
+      const txt = (await r.text()).trim();
+      if (txt.startsWith('[')) {
+        const list = JSON.parse(txt);
+        if (list.length > 0) {
+          const d   = list[0];  // первое устройство в бакете
+          const ts  = d.ts || 0;
+          const age = ts > 0 ? (Date.now() / 1000 - ts) : null;
+          let status = 'offline';
+          if (age !== null) {
+            if (age < 180) status = 'online';
+            else if (age < 600) status = 'stale';
+          }
+          return { status, age, deviceData: d };
+        }
+      }
+    }
+  } catch(e) { /* фоллбэк ниже */ }
+
+  // Попытка 2: heartbeat.txt (старый формат)
   const url = buildApiUrl(dev, 'read_file', '&file=heartbeat.txt');
   const r   = await fetch(url, { signal: AbortSignal.timeout(8000) });
   if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -582,10 +655,62 @@ async function apiRelayRead(dev) {
   return (await r.text()).trim();
 }
 
+/* ── MQTT WebSocket (прямое подключение к брокеру, без Cloud Function) ── */
+let _mqttWs = null;
+
+function _getMqttClient() {
+  if (_mqttWs && _mqttWs.connected) return _mqttWs;
+  if (_mqttWs) { try { _mqttWs.end(true); } catch(_) {} }
+  const clientId = 'portal-' + Math.random().toString(16).slice(2, 10);
+  _mqttWs = mqtt.connect('wss://broker.emqx.io:8084/mqtt', {
+    clientId,
+    keepalive: 60,
+    reconnectPeriod: 3000,
+    connectTimeout: 6000,
+    clean: true,
+  });
+  _mqttWs.on('connect', () => console.log('[MQTT WS] connected'));
+  _mqttWs.on('error',   e => console.warn('[MQTT WS] error:', e.message));
+  _mqttWs.on('close',   () => console.log('[MQTT WS] closed'));
+  return _mqttWs;
+}
+
+function mqttPublish(topic, payload) {
+  return new Promise((resolve, reject) => {
+    const client = _getMqttClient();
+    const pub = () => client.publish(topic, payload, { qos: 0 }, err => err ? reject(err) : resolve());
+    if (client.connected) { pub(); return; }
+    const tid = setTimeout(() => reject(new Error('MQTT connect timeout')), 6000);
+    client.once('connect', () => { clearTimeout(tid); pub(); });
+  });
+}
+
 async function apiCommand(dev, action) {
   const vals = { open:'1', hold:'2', close: dev.confirmChar || '0', restart:'!' };
   const val  = vals[action];
-  const url  = buildApiUrl(dev, 'write',
+  const tid  = dev.mqttTopicId || deviceStatus[dev.id]?.deviceData?.tid;
+
+  if (tid) {
+    // Прямой WebSocket MQTT — без Cloud Function, <1 с задержка
+    const topic = 'relay/' + tid + '/cmd';
+    mqttPublish(topic, action)
+      .then(() => console.log('[MQTT WS] sent:', action, '→', topic))
+      .catch(e  => console.warn('[MQTT WS] publish failed:', e.message));
+
+    // S3 фоновый фоллбэк (если функция настроена)
+    if (dev.functionUrl) {
+      const s3url = buildApiUrl(dev, 'write',
+        '&file=' + encodeURIComponent(dev.storageFile || 'relay.txt')
+        + '&pos=' + (dev.charPos || 0) + '&value=' + encodeURIComponent(val));
+      fetch(s3url, { signal: AbortSignal.timeout(10000) })
+        .catch(e => console.warn('[S3 fallback]', e));
+    }
+
+    return val; // мгновенный ответ UI
+  }
+
+  // Нет tid — синхронная запись в S3 (legacy без MQTT)
+  const url = buildApiUrl(dev, 'write',
     '&file=' + encodeURIComponent(dev.storageFile || 'relay.txt')
     + '&pos=' + (dev.charPos || 0) + '&value=' + encodeURIComponent(val));
   const r   = await fetch(url, { signal: AbortSignal.timeout(10000) });
@@ -633,6 +758,9 @@ async function writePhones(dev, phones) {
   if (!r.ok) throw new Error('HTTP ' + r.status);
   const txt = (await r.text()).trim();
   if (txt !== 'ok') throw new Error(txt);
+  // Мгновенная синхронизация — устройство перечитает CSV без ожидания 5 мин
+  const tid = dev.mqttTopicId || deviceStatus[dev.id]?.deviceData?.tid;
+  if (tid) mqttPublish('relay/' + tid + '/cmd', 'sync').catch(() => {});
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -645,9 +773,17 @@ async function pollDevice(dev) {
       apiHeartbeat(dev).catch(() => ({ status:'offline', age:null })),
       apiRelayRead(dev).catch(() => null)
     ]);
-    deviceStatus[dev.id] = { status:hb.status, age:hb.age, relay:rv };
+    deviceStatus[dev.id] = {
+      status: hb.status, age: hb.age, relay: rv,
+      deviceData: hb.deviceData || null
+    };
+    // Auto-save tid from heartbeat for MQTT routing
+    if (hb.deviceData?.tid && !dev.mqttTopicId) {
+      dev.mqttTopicId = hb.deviceData.tid;
+      persistDevices();
+    }
   } catch(e) {
-    deviceStatus[dev.id] = { status:'offline', age:null, relay:null };
+    deviceStatus[dev.id] = { status:'offline', age:null, relay:null, deviceData:null };
   }
   renderDashboard();
 }
@@ -678,16 +814,55 @@ function showPage(name) {
 ═══════════════════════════════════════════════════════════════ */
 function renderDashboard() {
   const g = document.getElementById('tile-grid');
-  if (!devices.length) {
+
+  // Pending tiles HTML
+  const pendingHtml = pendingDevices.length ? `
+    <div class="pending-section-hdr" style="grid-column:1/-1">◌ Обнаружены новые устройства</div>
+    ${pendingDevices.map(p => `
+      <div class="tile tile-pending" onclick="showConfirmModal('${esc(p.id)}')">
+        <div class="tile-head">
+          <div class="tile-dot" style="background:#AAAA00"></div>
+          <div class="tile-name" style="color:#DDDD00">${esc(p.name || p.id)}</div>
+        </div>
+        ${p.sim ? `<div class="tile-addr">SIM: ${esc(p.sim)}</div>` : ''}
+        <div class="tile-status" style="color:#AAAA00">Требует подтверждения</div>
+        <div class="tile-age" style="color:var(--muted);margin-top:4px">Нажмите для проверки и добавления</div>
+      </div>`).join('')}
+    <div style="grid-column:1/-1;height:4px"></div>` : '';
+
+  if (!devices.length && !pendingDevices.length) {
     g.innerHTML = '<div class="empty-state"><b>◼</b>Нет устройств<br><small>Нажмите «+ Добавить устройство» в меню слева</small></div>';
     return;
   }
+  if (!devices.length) { g.innerHTML = pendingHtml; return; }
+
   g.innerHTML = devices.map(dev => {
     const st  = deviceStatus[dev.id] || {};
+    const dd  = st.deviceData;
     const dotCls = st.status || '';
     let statusText = (!dev.functionUrl || !dev.bucket) ? 'Не настроено' :
       ({ online:'Онлайн', stale:'Нет данных', offline:'Офлайн' }[st.status] || 'Опрашивается…');
     const ageText = st.age != null ? fmtAge(st.age) + ' назад' : '';
+
+    // Дополнительные поля из device JSON
+    let metaLine = '';
+    if (dd) {
+      const sigIcon = dd.sig >= -70 ? '▂▄▆█' : dd.sig >= -85 ? '▂▄▆·' :
+                      dd.sig >= -100 ? '▂▄··' : dd.sig > -999 ? '▂···' : '····';
+      const net = (dd.net || '').replace('NO SIG', '—');
+      const simShort = dd.sim ? dd.sim.slice(-4) : '';
+      const openTxt = dd.tot != null ? `🔓 ${dd.ses}/${dd.tot}` : '';
+      const phTxt   = (dd.lph != null || dd.cph != null)
+        ? `📞 ${(dd.lph||0)+(dd.cph||0)}` : '';
+      metaLine = `<div class="tile-age" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+        <span title="Сигнал ${dd.sig} дБм" style="font-family:monospace;letter-spacing:-1px">${sigIcon}</span>
+        ${net ? `<span style="color:var(--primary)">${esc(net)}</span>` : ''}
+        ${simShort ? `<span style="color:var(--muted2)">…${simShort}</span>` : ''}
+        ${openTxt ? `<span>${openTxt}</span>` : ''}
+        ${phTxt ? `<span style="color:var(--muted2)">${phTxt}</span>` : ''}
+      </div>`;
+    }
+
     return `<div class="tile" data-id="${dev.id}" onclick="onTileClick(event,'${dev.id}')">
       <div class="tile-head">
         <div class="tile-dot ${dotCls}"></div>
@@ -696,8 +871,9 @@ function renderDashboard() {
       ${dev.address ? `<div class="tile-addr">📍 ${esc(dev.address)}</div>` : ''}
       <div class="tile-status">${statusText}</div>
       ${ageText ? `<div class="tile-age">${ageText}</div>` : ''}
+      ${metaLine}
     </div>`;
-  }).join('');
+  }).join('') + pendingHtml;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -754,10 +930,19 @@ function showDetailModal(id) {
     ? `<img src="https://static-maps.yandex.ru/1.x/?lang=ru_RU&ll=${dev.lon},${dev.lat}&z=15&size=480,140&l=map&pt=${dev.lon},${dev.lat},pm2rdm" alt="Карта">`
     : '<div class="no-map">Координаты не указаны</div>';
   const st = deviceStatus[id] || {};
+  const dd = st.deviceData;
   document.getElementById('detail-info').innerHTML = `
     <div class="detail-row"><span class="detail-label">Статус</span><span class="detail-value">${{online:'Онлайн',stale:'Нет данных',offline:'Офлайн'}[st.status]||'—'}</span></div>
     <div class="detail-row"><span class="detail-label">Последние данные</span><span class="detail-value">${st.age!=null?fmtAge(st.age)+' назад':'—'}</span></div>
     ${dev.address?`<div class="detail-row"><span class="detail-label">Адрес</span><span class="detail-value" style="max-width:250px">${esc(dev.address)}</span></div>`:''}
+    ${dd?`
+    <div class="detail-row"><span class="detail-label">SIM</span><span class="detail-value" style="font-family:monospace">${esc(dd.sim||'—')}</span></div>
+    <div class="detail-row"><span class="detail-label">Сигнал</span><span class="detail-value">${dd.sig&&dd.sig>-999?dd.sig+' дБм  '+esc(dd.net||''):'—'}</span></div>
+    <div class="detail-row"><span class="detail-label">Питание</span><span class="detail-value">${dd.volt>0?dd.volt.toFixed(2)+' В':'—'}</span></div>
+    ${dd.gps?`<div class="detail-row"><span class="detail-label">GPS</span><span class="detail-value">${(dd.lat||0).toFixed(5)}, ${(dd.lon||0).toFixed(5)}</span></div>`:''}
+    <div class="detail-row"><span class="detail-label">Номеров (UI/облако)</span><span class="detail-value">${dd.lph||0} / ${dd.cph||0}</span></div>
+    <div class="detail-row"><span class="detail-label">Открытий (сессия/всего)</span><span class="detail-value">${dd.ses||0} / ${dd.tot||0}</span></div>
+    `:''}
     <div class="detail-row"><span class="detail-label">Реле</span><span class="detail-value">${st.relay!=null?'Символ: '+st.relay:'—'}</span></div>`;
   document.getElementById('detail-overlay').classList.remove('hidden');
   resetAutoClose();
@@ -1248,7 +1433,8 @@ function showEditModal(id) {
   document.getElementById('e-bucket').value  = dev ? dev.bucket       || '' : '';
   document.getElementById('e-file').value    = dev ? dev.storageFile  || 'relay.txt' : 'relay.txt';
   document.getElementById('e-pos').value     = dev ? (dev.charPos  != null ? dev.charPos  : 0) : 0;
-  document.getElementById('e-confirm').value = dev ? dev.confirmChar  || '0' : '0';
+  document.getElementById('e-confirm').value  = dev ? dev.confirmChar  || '0' : '0';
+  document.getElementById('e-mqtttid').value  = dev ? dev.mqttTopicId  || '' : '';
   document.getElementById('e-coord-display').textContent = '';
   document.getElementById('delete-btn-row').style.display = dev ? 'flex' : 'none';
   document.getElementById('edit-overlay').classList.remove('hidden');
@@ -1268,9 +1454,10 @@ function saveDevice() {
     lon: parseFloat(document.getElementById('e-lon').value) || null,
     functionUrl:  document.getElementById('e-url').value.trim(),
     bucket:       document.getElementById('e-bucket').value.trim(),
-    storageFile:  document.getElementById('e-file').value.trim()    || 'relay.txt',
-    charPos:      parseInt(document.getElementById('e-pos').value)  || 0,
-    confirmChar:  document.getElementById('e-confirm').value.trim() || '0',
+    storageFile:  document.getElementById('e-file').value.trim()     || 'relay.txt',
+    charPos:      parseInt(document.getElementById('e-pos').value)   || 0,
+    confirmChar:  document.getElementById('e-confirm').value.trim()  || '0',
+    mqttTopicId:  document.getElementById('e-mqtttid').value.trim()  || '',
   };
   if (editingDeviceId) {
     const idx = devices.findIndex(d => d.id === editingDeviceId);
@@ -1364,10 +1551,131 @@ function tickClock() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   AUTO-DISCOVERY
+═══════════════════════════════════════════════════════════════ */
+async function scanRegistry() {
+  // Сканируем реестр через первое настроенное устройство с functionUrl + bucket
+  const src = devices.find(d => d.functionUrl && d.bucket);
+  if (!src) return;
+  try {
+    const url = buildApiUrl(src, 'list_registry', '');
+    const r   = await fetch(url, { signal: AbortSignal.timeout(10000) });
+    if (!r.ok) return;
+    const list = JSON.parse(await r.text());
+    if (!Array.isArray(list)) return;
+
+    // Уже известные устройства — по registryId, по mqttTopicId (tid) или по SIM
+    const knownIds  = new Set(devices.map(d => d.registryId).filter(Boolean));
+    const knownTids = new Set(devices.map(d => d.mqttTopicId).filter(Boolean));
+    const pendingIds = new Set(pendingDevices.map(p => p.id));
+
+    let changed = false;
+    for (const entry of list) {
+      if (!entry.id) continue;
+      if (knownIds.has(entry.id))  continue;                       // добавлено через реестр
+      if (entry.tid && knownTids.has(entry.tid)) continue;         // совпадает tid — то же устройство
+      if (pendingIds.has(entry.id)) continue;                      // уже ожидает подтверждения
+      pendingDevices.push(entry);
+      pendingIds.add(entry.id);
+      changed = true;
+    }
+    if (changed) { _persistPending(); renderDashboard(); }
+  } catch(e) { /* сканирование не критично */ }
+}
+
+async function manualScan() {
+  const btn = document.getElementById('scan-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
+  await scanRegistry();
+  if (btn) { btn.disabled = false; btn.textContent = '↻ Сканировать'; }
+  toast('Сканирование завершено');
+}
+
+let _confirmPending = null;
+
+function showConfirmModal(pendingId) {
+  _confirmPending = pendingDevices.find(p => p.id === pendingId);
+  if (!_confirmPending) return;
+  const p = _confirmPending;
+  document.getElementById('confirm-pending-id').value = p.id;
+  document.getElementById('confirm-name').value = p.name || '';
+  document.getElementById('confirm-heard').checked = false;
+  document.getElementById('confirm-add-btn').disabled = true;
+  document.getElementById('confirm-info').innerHTML =
+    `<b>ID:</b> ${esc(p.id)}<br>` +
+    (p.sim  ? `<b>SIM:</b> ${esc(p.sim)}<br>` : '') +
+    (p.tid  ? `<b>MQTT topic:</b> relay/${esc(p.tid)}/cmd<br>` : '') +
+    (p.bucket ? `<b>Bucket:</b> ${esc(p.bucket)}<br>` : '');
+  document.getElementById('confirm-overlay').classList.remove('hidden');
+}
+
+function closeConfirmModal() {
+  document.getElementById('confirm-overlay').classList.add('hidden');
+  _confirmPending = null;
+}
+
+async function confirmTestOpen() {
+  if (!_confirmPending) return;
+  const p   = _confirmPending;
+  const tid = p.tid;
+  const btn = document.getElementById('confirm-test-btn');
+  btn.disabled = true;
+  btn.textContent = '…';
+  try {
+    if (tid) {
+      await mqttPublish('relay/' + tid + '/cmd', 'open');
+    } else {
+      // S3 fallback
+      const fakeDev = { functionUrl: devices[0]?.functionUrl, bucket: p.bucket,
+                        storageFile: p.file || 'relay.txt' };
+      await fetch(buildApiUrl(fakeDev, 'write',
+        `&file=${encodeURIComponent(p.file||'relay.txt')}&pos=0&value=1`),
+        { signal: AbortSignal.timeout(8000) });
+    }
+    btn.textContent = '✓ Команда отправлена';
+  } catch(e) {
+    btn.textContent = '✗ Ошибка';
+  }
+  setTimeout(() => { btn.disabled = false; btn.textContent = '▶ Открыть (тест)'; }, 4000);
+}
+
+function confirmAddDevice() {
+  if (!_confirmPending) return;
+  const p    = _confirmPending;
+  const name = document.getElementById('confirm-name').value.trim() || p.name || p.id;
+  const src  = devices.find(d => d.functionUrl && d.bucket);
+  const newDev = {
+    id:          genId(),
+    registryId:  p.id,
+    name,
+    functionUrl: src?.functionUrl || '',
+    bucket:      p.bucket || src?.bucket || '',
+    storageFile: p.file   || 'relay.txt',
+    charPos:     0,
+    mqttTopicId: p.tid    || '',
+  };
+  devices.push(newDev);
+  pendingDevices = pendingDevices.filter(x => x.id !== p.id);
+  persistDevices(); _persistPending();
+  closeConfirmModal(); renderDashboard();
+  pollDevice(newDev);
+  toast(`Устройство «${name}» добавлено ✓`);
+}
+
+function dismissPending() {
+  const id = document.getElementById('confirm-pending-id').value;
+  pendingDevices = pendingDevices.filter(p => p.id !== id);
+  _persistPending(); closeConfirmModal(); renderDashboard();
+}
+
+/* ═══════════════════════════════════════════════════════════════
    INIT
 ═══════════════════════════════════════════════════════════════ */
 loadState();
 document.title = settings.portalName || 'Система управления GSM.Relay';
+
+// Пре-подключаем MQTT WebSocket если есть устройства с tid
+if (devices.some(d => d.mqttTopicId)) _getMqttClient();
 
 loadYmaps();
 renderDashboard();
@@ -1376,6 +1684,8 @@ pollAll();
 
 setInterval(pollAll, 60000);
 setInterval(tickClock, 1000);
+setInterval(scanRegistry, 10 * 60 * 1000);  // сканировать реестр каждые 10 мин
+setTimeout(scanRegistry, 3000);              // первый скан через 3 сек после загрузки
 tickClock();
 
 document.addEventListener('click', () => hideCtxMenu());
